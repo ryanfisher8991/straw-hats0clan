@@ -1,16 +1,13 @@
 const CLAN_TAG = process.env.NEXT_PUBLIC_CLAN_TAG!
 const CR_API_KEY = process.env.CLASH_ROYALE_API_KEY!
 const CR_BASE = 'https://api.clashroyale.com/v1'
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const CF_WORKER_URL = 'https://wandering-moon-5de6.ryanfisher8991.workers.dev'
 
 function encodeTag(tag: string) {
   return encodeURIComponent(`#${tag.replace('#', '')}`)
 }
 
 async function crFetch(path: string) {
-  // In production, route through Supabase Edge Function to avoid IP restrictions.
-  // In development, call the CR API directly.
   const isDev = process.env.NODE_ENV === 'development'
 
   if (isDev) {
@@ -22,12 +19,10 @@ async function crFetch(path: string) {
     return res.json()
   }
 
-  const proxyUrl = `${SUPABASE_URL}/functions/v1/cr-proxy?path=${encodeURIComponent(path)}`
-  const res = await fetch(proxyUrl, {
-    headers: { Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+  const res = await fetch(`${CF_WORKER_URL}/?path=${encodeURIComponent(path)}`, {
     next: { revalidate: 300 },
   })
-  if (!res.ok) throw new Error(`CR proxy error ${res.status}: ${path}`)
+  if (!res.ok) throw new Error(`CF proxy error ${res.status}: ${path}`)
   return res.json()
 }
 

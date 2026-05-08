@@ -12,6 +12,14 @@ serve(async (req: Request) => {
   const url = new URL(req.url);
   const path = url.searchParams.get("path");
 
+  if (path === "debug-ip") {
+    const ipRes = await fetch("https://httpbin.org/ip");
+    const ipData = await ipRes.json();
+    return new Response(JSON.stringify(ipData), {
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   if (!path) {
     return new Response(JSON.stringify({ error: "Missing path parameter" }), {
       status: 400,
