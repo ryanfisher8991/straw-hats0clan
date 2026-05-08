@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/war/snapshot",
+      "schedule": "0 10 * * 1"
+    },
+    {
+      "path": "/api/members/snapshot",
+      "schedule": "0 10 * * 1"
+    }
+  ]
+}
