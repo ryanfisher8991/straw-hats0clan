@@ -1,7 +1,7 @@
 const CLAN_TAG = process.env.NEXT_PUBLIC_CLAN_TAG!
 const CR_API_KEY = process.env.CLASH_ROYALE_API_KEY!
 const CR_BASE = 'https://api.clashroyale.com/v1'
-const CF_WORKER_URL = 'https://wandering-moon-5de6.ryanfisher8991.workers.dev'
+const CR_PROXY = 'https://proxy.royaleapi.dev/v1'
 
 function encodeTag(tag: string) {
   return encodeURIComponent(`#${tag.replace('#', '')}`)
@@ -9,20 +9,13 @@ function encodeTag(tag: string) {
 
 async function crFetch(path: string) {
   const isDev = process.env.NODE_ENV === 'development'
+  const base = isDev ? CR_BASE : CR_PROXY
 
-  if (isDev) {
-    const res = await fetch(`${CR_BASE}${path}`, {
-      headers: { Authorization: `Bearer ${CR_API_KEY}` },
-      next: { revalidate: 300 },
-    })
-    if (!res.ok) throw new Error(`CR API error ${res.status}: ${path}`)
-    return res.json()
-  }
-
-  const res = await fetch(`${CF_WORKER_URL}/?path=${encodeURIComponent(path)}`, {
+  const res = await fetch(`${base}${path}`, {
+    headers: { Authorization: `Bearer ${CR_API_KEY}` },
     next: { revalidate: 300 },
   })
-  if (!res.ok) throw new Error(`CF proxy error ${res.status}: ${path}`)
+  if (!res.ok) throw new Error(`CR API error ${res.status}: ${path}`)
   return res.json()
 }
 
