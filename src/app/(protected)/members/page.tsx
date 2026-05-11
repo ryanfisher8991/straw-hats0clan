@@ -1,27 +1,28 @@
-import { getClan, getClanMembers, getCurrentRiverRace, getRiverRaceLog } from "@/lib/cr-api";
+import { getClan, getClanMembers, getCurrentRiverRace } from "@/lib/cr-api";
 import { supabase } from "@/lib/supabase";
 import { Users, Trophy, Heart, TrendingUp } from "lucide-react";
 import MembersClient from "./MembersClient";
 
 export const revalidate = 300;
 
-// Baseline covers through this date (spreadsheet seed through 5/3/26).
-// Any race with createdDate on or after this is post-baseline and must be counted.
-// Format matches CR API createdDate prefix: "YYYYMMDD"
-const BASELINE_END_CRDATE = "20260504";
 const CLAN_TAG_PLAIN = "#QPRQ88YP";
+
+// Races created on or after this date are NOT in the baseline spreadsheet.
+// The baseline was captured after the race that ended ~5/8; the current race
+// started ~5/12. Races saved to war_member_stats by the cron will have
+// snapshotted_at equal to their createdDate (the race start), so any race
+// starting >= this cutoff is post-baseline and safe to add.
+const POST_BASELINE_CUTOFF = "2026-05-10T00:00:00Z";
 
 function normName(n: string) {
   return n.toLowerCase().replace(/0/g, "o").replace(/[\s._-]/g, "");
 }
 
 async function getData() {
-  const [clan, membersRes, raceRes, logRes, baselineRes] = await Promise.allSettled([
+  const [clan, membersRes, raceRes] = await Promise.allSettled([
     getClan(),
     getClanMembers(),
     getCurrentRiverRace(),
-    getRiverRaceLog(),
-    supabase.from("fame_baseline").select("player_name, player_tag, baseline_fame"),
   ]);
 
   const members = membersRes.status === "fulfilled" ? membersRes.value?.items ?? [] : [];
@@ -37,47 +38,51 @@ async function getData() {
     if (p.fame > 0) currentFameByTag.set(p.tag, p.fame);
   }
 
-  // --- Historical baseline ---
-  const baselineRows =
-    baselineRes.status === "fulfilled" ? baselineRes.value.data ?? [] : [];
+  // --- Historical baseline (spreadsheet seed, covers all races through ~5/8) ---
+  const { data: baselineRows } = await supabase
+    .from("fame_baseline")
+    .select("player_name, player_tag, baseline_fame");
+
   const baselineByName = new Map<string, number>();
   const baselineByNorm = new Map<string, number>();
   const baselineByTag = new Map<string, number>();
-  for (const row of baselineRows) {
+  for (const row of baselineRows ?? []) {
     baselineByName.set(row.player_name.toLowerCase(), row.baseline_fame);
     baselineByNorm.set(normName(row.player_name), row.baseline_fame);
     if (row.player_tag) baselineByTag.set(row.player_tag, row.baseline_fame);
   }
 
-  // --- Completed post-baseline races from the live API race log ---
-  // The race log only contains completed races (not the current one), so no
-  // double-counting with currentFameByTag. We pull directly from the API so
-  // data is always fresh regardless of when the Supabase cron last ran.
-  const raceLog = logRes.status === "fulfilled" ? logRes.value : null;
-  const completedRaces = (raceLog?.items ?? []).filter(
-    (r: { createdDate: string }) => r.createdDate >= BASELINE_END_CRDATE
-  );
-  const completedFameByTag = new Map<string, number>();
-  for (const race of completedRaces) {
-    const ourEntry = (race.standings ?? []).find(
-      (s: { clan: { tag: string } }) => s.clan?.tag === CLAN_TAG_PLAIN
-    );
-    const participants: { tag: string; fame: number }[] = ourEntry?.clan?.participants ?? [];
-    for (const p of participants) {
-      completedFameByTag.set(p.tag, (completedFameByTag.get(p.tag) ?? 0) + p.fame);
+  // --- Completed post-baseline races saved by the weekly cron ---
+  // The cron stores each race with snapshotted_at = race createdDate.
+  // POST_BASELINE_CUTOFF excludes Race B (created 5/5, already in baseline)
+  // and picks up Race C (created ~5/12) and later once they complete.
+  const { data: recentSnapshots } = await supabase
+    .from("war_snapshots")
+    .select("id")
+    .gte("snapshotted_at", POST_BASELINE_CUTOFF);
+
+  const recentFameByTag = new Map<string, number>();
+  if (recentSnapshots && recentSnapshots.length > 0) {
+    const snapshotIds = recentSnapshots.map((s: { id: string }) => s.id);
+    const { data: recentStats } = await supabase
+      .from("war_member_stats")
+      .select("player_tag, fame")
+      .in("snapshot_id", snapshotIds);
+    for (const row of recentStats ?? []) {
+      recentFameByTag.set(row.player_tag, (recentFameByTag.get(row.player_tag) ?? 0) + row.fame);
     }
   }
 
-  // --- Combine: baseline + completed post-baseline + current race ---
+  // --- Combine: baseline + completed post-baseline + current race in progress ---
   const lifetimeFame: Record<string, number> = {};
   for (const m of members) {
     const base = baselineByTag.get(m.tag)
       ?? baselineByName.get(m.name.toLowerCase())
       ?? baselineByNorm.get(normName(m.name))
       ?? 0;
-    const completed = completedFameByTag.get(m.tag) ?? 0;
+    const recent = recentFameByTag.get(m.tag) ?? 0;
     const current = currentFameByTag.get(m.tag) ?? 0;
-    const total = base + completed + current;
+    const total = base + recent + current;
     if (total > 0) lifetimeFame[m.tag] = total;
   }
 
