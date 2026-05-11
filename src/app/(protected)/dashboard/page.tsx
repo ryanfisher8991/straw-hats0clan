@@ -1,32 +1,102 @@
-import { getClan, getClanMembers, getClanLocalRank } from "@/lib/cr-api";
+import { getClan, getClanMembers, getClanLocalRank, getCurrentRiverRace } from "@/lib/cr-api";
+import { supabase } from "@/lib/supabase";
 import { Trophy, Users, Swords, Heart, Crown, MapPin, Globe } from "lucide-react";
 import type { ClanMember } from "@/types/clash";
+import SpotlightCards from "./SpotlightCards";
 
 export const revalidate = 300;
 
+const CLAN_TAG = "#QPRQ88YP";
+
 async function getData() {
   try {
-    const [clan, membersRes, localRank] = await Promise.allSettled([
+    const [clan, membersRes, localRank, raceRes] = await Promise.allSettled([
       getClan(),
       getClanMembers(),
       getClanLocalRank(),
+      getCurrentRiverRace(),
     ]);
     return {
       clan: clan.status === "fulfilled" ? clan.value : null,
       members: membersRes.status === "fulfilled" ? membersRes.value?.items ?? [] : [],
       localRank: localRank.status === "fulfilled" ? localRank.value : null,
+      race: raceRes.status === "fulfilled" ? raceRes.value : null,
     };
   } catch {
-    return { clan: null, members: [], localRank: null };
+    return { clan: null, members: [], localRank: null, race: null };
   }
 }
 
-export default async function DashboardPage() {
-  const { clan, members, localRank } = await getData();
+async function getTrophyDeltas(): Promise<Map<string, number>> {
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("member_snapshots")
+    .select("player_tag, trophies, snapshotted_at")
+    .gte("snapshotted_at", cutoff)
+    .order("snapshotted_at", { ascending: false });
 
-  const topDonors: ClanMember[] = [...members]
-    .sort((a: ClanMember, b: ClanMember) => b.donations - a.donations)
-    .slice(0, 5);
+  if (!data || data.length === 0) return new Map();
+
+  const byTag = new Map<string, { newest: number; oldest: number }>();
+  for (const row of data) {
+    const existing = byTag.get(row.player_tag);
+    if (!existing) {
+      byTag.set(row.player_tag, { newest: row.trophies, oldest: row.trophies });
+    } else {
+      existing.oldest = row.trophies;
+    }
+  }
+
+  const deltas = new Map<string, number>();
+  for (const [tag, { newest, oldest }] of byTag) {
+    deltas.set(tag, newest - oldest);
+  }
+  return deltas;
+}
+
+export default async function DashboardPage() {
+  const [{ clan, members, localRank, race }, trophyDeltas] = await Promise.all([
+    getData(),
+    getTrophyDeltas(),
+  ]);
+
+  // War Hero: top fame participant in current race
+  const raceParticipants: { tag: string; name: string; fame: number }[] =
+    race?.clan?.tag === CLAN_TAG
+      ? race.clan.participants ?? []
+      : race?.clans?.find((c: { tag: string }) => c.tag === CLAN_TAG)?.participants ?? [];
+
+  const topFameParticipant = raceParticipants
+    .filter((p) => p.fame > 0)
+    .sort((a, b) => b.fame - a.fame)[0] ?? null;
+
+  const warHero = topFameParticipant
+    ? { name: topFameParticipant.name, fame: topFameParticipant.fame }
+    : null;
+
+  // Top Donor: highest donations this week
+  const sortedByDonation = [...members].sort(
+    (a: ClanMember, b: ClanMember) => b.donations - a.donations
+  );
+  const topDonor = sortedByDonation[0]?.donations > 0
+    ? { name: sortedByDonation[0].name, donations: sortedByDonation[0].donations }
+    : null;
+
+  // Rising Star: biggest trophy gain in last 14 days
+  let risingStar: { name: string; delta: number } | null = null;
+  if (trophyDeltas.size > 0) {
+    let bestTag = "";
+    let bestDelta = 0;
+    for (const [tag, delta] of trophyDeltas) {
+      if (delta > bestDelta) { bestDelta = delta; bestTag = tag; }
+    }
+    const starMember = bestTag ? members.find((m: ClanMember) => m.tag === bestTag) : null;
+    if (starMember && bestDelta > 0) {
+      risingStar = { name: starMember.name, delta: bestDelta };
+    }
+  }
+
+  const topDonors: ClanMember[] = sortedByDonation.slice(0, 5);
 
   const rankChanged = localRank && localRank.rank !== localRank.previousRank;
   const rankUp = localRank && localRank.rank < localRank.previousRank;
@@ -41,6 +111,9 @@ export default async function DashboardPage() {
           {clan?.name ?? "The Straw Hats"} · Live clan overview
         </p>
       </div>
+
+      {/* Spotlight cards */}
+      <SpotlightCards warHero={warHero} topDonor={topDonor} risingStar={risingStar} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

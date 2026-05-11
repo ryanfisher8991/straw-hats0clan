@@ -46,10 +46,17 @@ export function getAllCards() {
 export async function getClanLocalRank(): Promise<{ rank: number; previousRank: number; locationName: string } | null> {
   const LOCATION_ID = 57000001
   try {
-    const res = await crFetch(`/locations/${LOCATION_ID}/rankings/clans?limit=200`)
-    const entry = res.items?.find((c: { tag: string }) => c.tag === `#${CLAN_TAG}`)
-    if (!entry) return null
-    return { rank: entry.rank, previousRank: entry.previousRank, locationName: entry.location?.name ?? 'North America' }
+    // Try clan wars ranking first (what's shown in-game as war rank)
+    const warRes = await crFetch(`/locations/${LOCATION_ID}/rankings/clanwars?limit=1000`)
+    const warEntry = warRes.items?.find((c: { tag: string }) => c.tag === `#${CLAN_TAG}`)
+    if (warEntry) {
+      return { rank: warEntry.rank, previousRank: warEntry.previousRank ?? warEntry.rank, locationName: warEntry.location?.name ?? 'North America' }
+    }
+    // Fall back to clan score ranking
+    const scoreRes = await crFetch(`/locations/${LOCATION_ID}/rankings/clans?limit=1000`)
+    const scoreEntry = scoreRes.items?.find((c: { tag: string }) => c.tag === `#${CLAN_TAG}`)
+    if (!scoreEntry) return null
+    return { rank: scoreEntry.rank, previousRank: scoreEntry.previousRank ?? scoreEntry.rank, locationName: scoreEntry.location?.name ?? 'North America' }
   } catch {
     return null
   }
