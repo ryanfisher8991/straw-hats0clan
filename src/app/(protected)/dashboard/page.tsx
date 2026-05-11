@@ -1,48 +1,32 @@
-import { getClan, getClanMembers, getCurrentRiverRace, getClanLocalRank } from "@/lib/cr-api";
+import { getClan, getClanMembers, getClanLocalRank } from "@/lib/cr-api";
 import { Trophy, Users, Swords, Heart, Crown, MapPin, Globe } from "lucide-react";
-import type { ClanMember, RiverRaceParticipant } from "@/types/clash";
-import RacePanel from "./RacePanel";
+import type { ClanMember } from "@/types/clash";
 
 export const revalidate = 300;
 
 async function getData() {
   try {
-    const [clan, membersRes, race, localRank] = await Promise.allSettled([
+    const [clan, membersRes, localRank] = await Promise.allSettled([
       getClan(),
       getClanMembers(),
-      getCurrentRiverRace(),
       getClanLocalRank(),
     ]);
     return {
       clan: clan.status === "fulfilled" ? clan.value : null,
       members: membersRes.status === "fulfilled" ? membersRes.value?.items ?? [] : [],
-      race: race.status === "fulfilled" ? race.value : null,
       localRank: localRank.status === "fulfilled" ? localRank.value : null,
     };
   } catch {
-    return { clan: null, members: [], race: null, localRank: null };
+    return { clan: null, members: [], localRank: null };
   }
 }
 
 export default async function DashboardPage() {
-  const { clan, members, race, localRank } = await getData();
+  const { clan, members, localRank } = await getData();
 
   const topDonors: ClanMember[] = [...members]
     .sort((a: ClanMember, b: ClanMember) => b.donations - a.donations)
     .slice(0, 5);
-
-  const CLAN_TAG = "#QPRQ88YP";
-  const ourClan = race?.clan;
-  const warParticipants: RiverRaceParticipant[] = ourClan?.participants ?? [];
-  const totalFame = warParticipants.reduce((s: number, p: RiverRaceParticipant) => s + p.fame, 0);
-
-  // Build clan standings — include full participants for opponent drill-down
-  const racingClans = (race?.clans ?? []).map((c: { tag: string; name: string; fame: number; participants?: RiverRaceParticipant[] }) => ({
-    tag: c.tag,
-    name: c.name,
-    fame: c.tag === CLAN_TAG ? totalFame : (c.participants ?? []).reduce((s: number, p: RiverRaceParticipant) => s + p.fame, 0),
-    participants: c.tag === CLAN_TAG ? warParticipants : (c.participants ?? []),
-  }));
 
   const rankChanged = localRank && localRank.rank !== localRank.previousRank;
   const rankUp = localRank && localRank.rank < localRank.previousRank;
@@ -58,13 +42,13 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {/* Stat cards row 1 */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         {[
-          { label: "Members",      value: clan?.members ?? members.length, sub: "of 50",        icon: Users,  color: "text-blue-clash",  delay: "0.1s"  },
-          { label: "War Trophies", value: clan?.clanWarTrophies?.toLocaleString() ?? "—",        sub: "all-time",     icon: Swords, color: "text-gold-400",  delay: "0.15s" },
-          { label: "Clan Score",   value: clan?.clanScore?.toLocaleString() ?? "—",              sub: "trophy score", icon: Trophy, color: "text-red-clash", delay: "0.2s"  },
-          { label: "Donations",    value: clan?.donationsPerWeek?.toLocaleString() ?? "—",       sub: "this week",    icon: Heart,  color: "text-green-clash",delay: "0.25s" },
+          { label: "Members",      value: clan?.members ?? members.length, sub: "of 50",        icon: Users,  color: "text-blue-clash",   delay: "0.1s"  },
+          { label: "War Trophies", value: clan?.clanWarTrophies?.toLocaleString() ?? "—",        sub: "all-time",     icon: Swords, color: "text-gold-400",   delay: "0.15s" },
+          { label: "Clan Score",   value: clan?.clanScore?.toLocaleString() ?? "—",              sub: "trophy score", icon: Trophy, color: "text-red-clash",  delay: "0.2s"  },
+          { label: "Donations",    value: clan?.donationsPerWeek?.toLocaleString() ?? "—",       sub: "this week",    icon: Heart,  color: "text-green-clash", delay: "0.25s" },
         ].map(({ label, value, sub, icon: Icon, color, delay }) => (
           <div key={label} className="card-base stat-card-glow p-5 animate-fade-up" style={{ opacity: 0, animationDelay: delay }}>
             <div className="flex items-start justify-between mb-3">
@@ -79,7 +63,6 @@ export default async function DashboardPage() {
 
       {/* Rankings row */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* Local rank */}
         <div className="card-base stat-card-glow p-5 animate-fade-up" style={{ opacity: 0, animationDelay: "0.3s" }}>
           <div className="flex items-start justify-between mb-3">
             <p className="font-heading text-[0.65rem] tracking-[0.15em] text-text-muted uppercase">Local Rank</p>
@@ -98,7 +81,6 @@ export default async function DashboardPage() {
           <p className="text-text-muted text-xs mt-1 font-body">{localRank?.locationName ?? "North America"}</p>
         </div>
 
-        {/* Global rank */}
         <div className="card-base stat-card-glow p-5 animate-fade-up" style={{ opacity: 0, animationDelay: "0.35s" }}>
           <div className="flex items-start justify-between mb-3">
             <p className="font-heading text-[0.65rem] tracking-[0.15em] text-text-muted uppercase">Global Rank</p>
@@ -109,56 +91,37 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Current River Race — expandable panel */}
-        {race && ourClan ? (
-          <RacePanel
-            seasonId={race.seasonId}
-            sectionIndex={race.sectionIndex}
-            totalFame={totalFame}
-            participants={warParticipants}
-            members={members.map((m: ClanMember) => ({ tag: m.tag, name: m.name }))}
-            clans={racingClans}
-          />
-        ) : (
-          <div className="card-base p-6 animate-fade-up" style={{ opacity: 0, animationDelay: "0.4s" }}>
-            <p className="text-center py-8 text-text-muted font-body text-sm">No active river race found</p>
-          </div>
-        )}
-
-        {/* Top donors */}
-        <div className="card-base p-6 animate-fade-up" style={{ opacity: 0, animationDelay: "0.45s" }}>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-heading text-sm tracking-wider text-text-primary">Top Donors</h2>
-            <Heart size={15} className="text-red-clash" strokeWidth={1.5} />
-          </div>
-          {topDonors.length > 0 ? (
-            <div className="space-y-1.5">
-              {topDonors.map((m: ClanMember, i: number) => {
-                const roleColors: Record<string, string> = {
-                  leader:    "bg-gold-700 text-gold-300",
-                  coLeader:  "bg-navy-600 text-blue-clash",
-                  elder:     "bg-navy-600 text-text-secondary",
-                  member:    "bg-navy-700 text-text-muted",
-                };
-                return (
-                  <div key={m.tag} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-navy-800 border border-navy-500">
-                    <span className="font-display text-xs text-gold-600 w-4 text-center">{i + 1}</span>
-                    {i === 0 && <Crown size={12} className="text-gold-400 -ml-1 shrink-0" />}
-                    <span className="flex-1 font-body text-sm text-text-primary truncate">{m.name}</span>
-                    <span className={`badge-role ${roleColors[m.role] ?? roleColors.member}`}>
-                      {m.role === "coLeader" ? "Co-Leader" : m.role}
-                    </span>
-                    <span className="font-heading text-xs text-gold-400 ml-1">{m.donations.toLocaleString()}</span>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-text-muted font-body text-sm">Loading member data...</div>
-          )}
+      {/* Top donors */}
+      <div className="card-base p-6 animate-fade-up" style={{ opacity: 0, animationDelay: "0.4s" }}>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="font-heading text-sm tracking-wider text-text-primary">Top Donors</h2>
+          <Heart size={15} className="text-red-clash" strokeWidth={1.5} />
         </div>
+        {topDonors.length > 0 ? (
+          <div className="space-y-1.5">
+            {topDonors.map((m: ClanMember, i: number) => {
+              const roleColors: Record<string, string> = {
+                leader:   "bg-gold-700 text-gold-300",
+                coLeader: "bg-navy-600 text-blue-clash",
+                elder:    "bg-navy-600 text-text-secondary",
+                member:   "bg-navy-700 text-text-muted",
+              };
+              return (
+                <div key={m.tag} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-navy-800 border border-navy-500">
+                  <span className="font-display text-xs text-gold-600 w-4 text-center">{i + 1}</span>
+                  {i === 0 && <Crown size={12} className="text-gold-400 -ml-1 shrink-0" />}
+                  <span className="flex-1 font-body text-sm text-text-primary truncate">{m.name}</span>
+                  <span className={`badge-role ${roleColors[m.role] ?? roleColors.member}`}>
+                    {m.role === "coLeader" ? "Co-Leader" : m.role}
+                  </span>
+                  <span className="font-heading text-xs text-gold-400 ml-1">{m.donations.toLocaleString()}</span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-text-muted font-body text-sm">Loading member data...</div>
+        )}
       </div>
     </div>
   );

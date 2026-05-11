@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Shield, Skull, LogOut } from "lucide-react";
+import { LayoutDashboard, Swords, Users, Skull, LogOut } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/war",       label: "War Log",   icon: Swords },
   { href: "/members",   label: "Members",   icon: Users },
-  { href: "/decks",     label: "Decks",     icon: Shield },
   { href: "/graveyard", label: "Graveyard", icon: Skull },
 ];
 
