@@ -35,7 +35,7 @@ function formatLastSeen(lastSeen: string): string {
 
 const WAR_RANKS = [
   { name: "Hashira",   min: 59300,  color: "text-red-400",    border: "border-red-500/50",    bg: "bg-red-900/20"    },
-  { name: "Shinigami", min: 29200,  color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-900/20" },
+  { name: "Special Grade", min: 29200,  color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-900/20" },
   { name: "Diamond",   min: 14400,  color: "text-cyan-400",   border: "border-cyan-500/50",   bg: "bg-cyan-900/20"   },
   { name: "Gold",      min: 7100,   color: "text-gold-400",   border: "border-gold-700/50",   bg: "bg-gold-700/15"   },
   { name: "Silver",    min: 3500,   color: "text-slate-300",  border: "border-slate-500/50",  bg: "bg-slate-700/20"  },
