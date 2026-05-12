@@ -1,11 +1,9 @@
-import { getClan, getClanMembers, getCurrentRiverRace } from "@/lib/cr-api";
+import { getClan, getClanMembers } from "@/lib/cr-api";
 import { supabase } from "@/lib/supabase";
 import { Users, Trophy, Heart, TrendingUp } from "lucide-react";
 import MembersClient from "./MembersClient";
 
 export const revalidate = 300;
-
-const CLAN_TAG_PLAIN = "#QPRQ88YP";
 
 // Season 132 week 1 ended 5/10/26 (started ~5/4) — first race NOT in the baseline.
 // Races saved to war_member_stats use snapshotted_at = race createdDate (start date).
@@ -17,26 +15,14 @@ function normName(n: string) {
 }
 
 async function getData() {
-  const [clan, membersRes, raceRes] = await Promise.allSettled([
+  const [clan, membersRes] = await Promise.allSettled([
     getClan(),
     getClanMembers(),
-    getCurrentRiverRace(),
   ]);
 
   const members = membersRes.status === "fulfilled" ? membersRes.value?.items ?? [] : [];
 
-  // --- Current race (live, in progress) ---
-  const currentRace = raceRes.status === "fulfilled" ? raceRes.value : null;
-  const currentParticipants: { tag: string; fame: number }[] =
-    currentRace?.clan?.tag === CLAN_TAG_PLAIN
-      ? currentRace.clan.participants ?? []
-      : currentRace?.clans?.find((c: { tag: string }) => c.tag === CLAN_TAG_PLAIN)?.participants ?? [];
-  const currentFameByTag = new Map<string, number>();
-  for (const p of currentParticipants) {
-    if (p.fame > 0) currentFameByTag.set(p.tag, p.fame);
-  }
-
-  // --- Historical baseline (spreadsheet seed, covers all races through ~5/8) ---
+  // --- Historical baseline (spreadsheet seed) ---
   const { data: baselineRows } = await supabase
     .from("fame_baseline")
     .select("player_name, player_tag, baseline_fame");
@@ -71,7 +57,9 @@ async function getData() {
     }
   }
 
-  // --- Combine: baseline + completed post-baseline + current race in progress ---
+  // --- Combine: baseline + completed post-baseline races only ---
+  // Live in-progress race is NOT added here to avoid double-counting when the
+  // race ends and gets saved to war_member_stats. War Log shows live race data.
   const lifetimeFame: Record<string, number> = {};
   for (const m of members) {
     const base = baselineByTag.get(m.tag)
@@ -79,8 +67,7 @@ async function getData() {
       ?? baselineByNorm.get(normName(m.name))
       ?? 0;
     const recent = recentFameByTag.get(m.tag) ?? 0;
-    const current = currentFameByTag.get(m.tag) ?? 0;
-    const total = base + recent + current;
+    const total = base + recent;
     if (total > 0) lifetimeFame[m.tag] = total;
   }
 
