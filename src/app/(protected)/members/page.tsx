@@ -7,12 +7,10 @@ export const revalidate = 300;
 
 const CLAN_TAG_PLAIN = "#QPRQ88YP";
 
-// Races created on or after this date are NOT in the baseline spreadsheet.
-// The baseline was captured after the race that ended ~5/8; the current race
-// started ~5/12. Races saved to war_member_stats by the cron will have
-// snapshotted_at equal to their createdDate (the race start), so any race
-// starting >= this cutoff is post-baseline and safe to add.
-const POST_BASELINE_CUTOFF = "2026-05-10T00:00:00Z";
+// Season 132 week 1 ended 5/10/26 (started ~5/4) — first race NOT in the baseline.
+// Races saved to war_member_stats use snapshotted_at = race createdDate (start date).
+// The prior race in the baseline started ~4/28, so 5/4 safely splits them.
+const POST_BASELINE_CUTOFF = "2026-05-04T00:00:00Z";
 
 function normName(n: string) {
   return n.toLowerCase().replace(/0/g, "o").replace(/[\s._-]/g, "");
