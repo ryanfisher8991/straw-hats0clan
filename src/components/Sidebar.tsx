@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Swords, Users, Skull, BarChart2 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard",    label: "Dashboard",     icon: LayoutDashboard },
-  { href: "/war",          label: "War Log",        icon: Swords },
-  { href: "/war-analysis", label: "War Analysis",   icon: BarChart2 },
-  { href: "/members",      label: "Members",        icon: Users },
-  { href: "/graveyard",    label: "Graveyard",      icon: Skull },
+  { href: "/dashboard",    label: "Dashboard",  mobileLabel: "Home",     icon: LayoutDashboard },
+  { href: "/war",          label: "War Log",    mobileLabel: "War Log",  icon: Swords },
+  { href: "/war-analysis", label: "War Analysis", mobileLabel: "Analysis", icon: BarChart2 },
+  { href: "/members",      label: "Members",    mobileLabel: "Members",  icon: Users },
+  { href: "/graveyard",    label: "Graveyard",  mobileLabel: "Graveyard", icon: Skull },
 ];
 
 export default function Sidebar() {
@@ -24,18 +24,18 @@ export default function Sidebar() {
 
       {/* Mobile bottom bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-navy-950 border-t border-navy-500 flex">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, mobileLabel, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-heading tracking-wider transition-colors ${
+              className={`flex-1 flex flex-col items-center gap-1 py-3 text-[9px] font-heading tracking-wide transition-colors ${
                 active ? "text-gold-400" : "text-text-muted"
               }`}
             >
-              <Icon size={20} strokeWidth={active ? 2 : 1.5} />
-              {label}
+              <Icon size={18} strokeWidth={active ? 2 : 1.5} />
+              {mobileLabel}
             </Link>
           );
         })}
