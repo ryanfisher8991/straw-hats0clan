@@ -78,8 +78,8 @@ function WarRow({ war }: { war: WarEntry }) {
         )}
       </span>
 
-      <span className="font-heading text-xs text-text-secondary text-right">
-        {war.decksUsed}/4
+      <span className={`font-heading text-xs text-right ${war.decksMissed > 0 ? "text-red-clash" : "text-text-secondary"}`}>
+        {war.decksUsed} of 4
       </span>
 
       <span
@@ -141,10 +141,10 @@ export default function WarAnalysisClient({
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_6rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
+      <div className="grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
         <span>Member</span>
         <span className="text-right">Avg Fame</span>
-        <span className="text-right hidden sm:block">Avg Missed</span>
+        <span className="text-right hidden sm:block">Decks Used</span>
         <span className="text-right">Wars</span>
         <span />
       </div>
@@ -152,6 +152,9 @@ export default function WarAnalysisClient({
       {members.map((member, i) => {
         const isOpen = expanded === member.tag;
         const isFlagged = member.avgFame < FAME_WEEKLY_THRESHOLD;
+        const totalDecksUsed = member.wars.reduce((s, w) => s + w.decksUsed, 0);
+        const maxDecks = member.warsCount * 4;
+        const avgDecksUsed = Math.round((totalDecksUsed / member.warsCount) * 10) / 10;
 
         return (
           <div
@@ -166,7 +169,7 @@ export default function WarAnalysisClient({
           >
             <button
               onClick={() => setExpanded(isOpen ? null : member.tag)}
-              className={`w-full grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_6rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
+              className={`w-full grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
                 isFlagged ? "bg-red-clash/[0.04]" : ""
               }`}
             >
@@ -197,18 +200,18 @@ export default function WarAnalysisClient({
                 </span>
               </div>
 
-              {/* Avg Decks Missed */}
+              {/* Decks Used total */}
               <div className="text-right hidden sm:block">
                 <span
                   className={`font-heading text-xs ${
-                    member.avgDecksMissed > 0
-                      ? member.avgDecksMissed >= 2
+                    totalDecksUsed < maxDecks
+                      ? totalDecksUsed < maxDecks * 0.75
                         ? "text-red-clash"
                         : "text-gold-400"
                       : "text-green-clash"
                   }`}
                 >
-                  {member.avgDecksMissed.toFixed(1)}
+                  {totalDecksUsed} of {maxDecks}
                 </span>
               </div>
 
@@ -243,15 +246,19 @@ export default function WarAnalysisClient({
                     <WarRow key={war.snapshotId} war={war} />
                   ))}
                 </div>
-                {/* Mobile: show avg decks missed summary */}
+                {/* Mobile: show decks used total */}
                 <div className="sm:hidden mt-3 flex items-center justify-between px-3 text-[0.65rem] font-heading tracking-wide text-text-muted">
-                  <span>Avg Decks Missed</span>
+                  <span>Total Decks Used</span>
                   <span
                     className={
-                      member.avgDecksMissed > 0 ? "text-red-clash" : "text-green-clash"
+                      totalDecksUsed < maxDecks
+                        ? totalDecksUsed < maxDecks * 0.75
+                          ? "text-red-clash"
+                          : "text-gold-400"
+                        : "text-green-clash"
                     }
                   >
-                    {member.avgDecksMissed.toFixed(1)}
+                    {totalDecksUsed} of {maxDecks}
                   </span>
                 </div>
               </div>
