@@ -173,7 +173,7 @@ export default function WarAnalysisClient({
             <button
               onClick={() => setExpanded(isOpen ? null : member.tag)}
               className={`w-full grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
-                isFlagged ? "bg-red-clash/[0.04]" : ""
+                isFlaggedRecent ? "animate-flash-red-bg" : isFlagged ? "bg-red-clash/[0.04]" : ""
               }`}
             >
               {/* Name */}
@@ -187,9 +187,6 @@ export default function WarAnalysisClient({
                   <span className="font-heading text-[0.6rem] tracking-wide text-text-muted shrink-0">
                     #{member.clanRank}
                   </span>
-                )}
-                {isFlaggedRecent && (
-                  <span className="font-display text-sm text-red-clash animate-flash-red shrink-0 select-none">!</span>
                 )}
                 <span
                   className={`font-heading text-sm tracking-wide truncate ${
