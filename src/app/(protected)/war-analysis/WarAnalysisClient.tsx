@@ -142,11 +142,11 @@ export default function WarAnalysisClient({
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
+      <div className="grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
         <span>Member</span>
         <span className="text-right">Avg Fame</span>
         <span className="text-right hidden sm:block">Decks Used</span>
-        <span className="text-right">Wars</span>
+        <span className="text-right hidden sm:block">Wars</span>
         <span />
       </div>
 
@@ -172,7 +172,7 @@ export default function WarAnalysisClient({
           >
             <button
               onClick={() => setExpanded(isOpen ? null : member.tag)}
-              className={`w-full grid grid-cols-[1fr_6rem_5rem_4rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
+              className={`w-full grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
                 isFlaggedRecent ? "animate-flash-red-bg" : isFlagged ? "bg-red-clash/[0.04]" : ""
               }`}
             >
@@ -208,7 +208,7 @@ export default function WarAnalysisClient({
                 </span>
               </div>
 
-              {/* Decks Used total */}
+              {/* Decks Used total — desktop only */}
               <div className="text-right hidden sm:block">
                 <span
                   className={`font-heading text-xs ${
@@ -223,8 +223,8 @@ export default function WarAnalysisClient({
                 </span>
               </div>
 
-              {/* Wars count */}
-              <div className="text-right">
+              {/* Wars count — desktop only */}
+              <div className="text-right hidden sm:block">
                 <span className="font-heading text-xs text-text-muted">
                   {member.warsCount}
                 </span>
