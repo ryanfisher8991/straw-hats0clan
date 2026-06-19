@@ -76,10 +76,20 @@ body::after {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; }
 }
+@keyframes flashRed {
+  0%, 100% { color: #e03030; opacity: 1; }
+  50% { color: #f05050; opacity: 0.5; }
+}
+@keyframes flashRedBg {
+  0%, 100% { background-color: rgba(224,48,48,0.12); }
+  50% { background-color: rgba(224,48,48,0.04); }
+}
 
 .animate-fade-up { animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
 .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
 .animate-crown { animation: crownFloat 3s ease-in-out infinite; }
+.animate-flash-red { animation: flashRed 1s ease-in-out infinite; }
+.animate-flash-red-bg { animation: flashRedBg 1s ease-in-out infinite; }
 
 .font-display { font-family: var(--font-display); }
 .font-heading { font-family: var(--font-heading); }

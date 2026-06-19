@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Skull, LogOut } from "lucide-react";
+import { LayoutDashboard, Swords, Users, Skull, LogOut, BarChart2 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/war",       label: "War Log",   icon: Swords },
-  { href: "/members",   label: "Members",   icon: Users },
-  { href: "/graveyard", label: "Graveyard", icon: Skull },
+  { href: "/dashboard",    label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/war",          label: "War Log",        icon: Swords },
+  { href: "/war-analysis", label: "War Analysis",   icon: BarChart2 },
+  { href: "/members",      label: "Members",        icon: Users },
+  { href: "/graveyard",    label: "Graveyard",      icon: Skull },
 ];
 
 export default function Sidebar() {
