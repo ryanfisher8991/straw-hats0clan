@@ -153,6 +153,8 @@ export default function WarAnalysisClient({
       {members.map((member, i) => {
         const isOpen = expanded === member.tag;
         const isFlagged = member.avgFame < FAME_WEEKLY_THRESHOLD;
+        const mostRecentFame = member.wars[0]?.fame ?? null;
+        const isFlaggedRecent = mostRecentFame !== null && mostRecentFame < FAME_WEEKLY_THRESHOLD;
         const totalDecksUsed = member.wars.reduce((s, w) => s + w.decksUsed, 0);
         const maxDecks = member.warsCount * 16;
         const avgDecksUsed = Math.round((totalDecksUsed / member.warsCount) * 10) / 10;
@@ -185,6 +187,9 @@ export default function WarAnalysisClient({
                   <span className="font-heading text-[0.6rem] tracking-wide text-text-muted shrink-0">
                     #{member.clanRank}
                   </span>
+                )}
+                {isFlaggedRecent && (
+                  <span className="font-display text-sm text-red-clash animate-flash-red shrink-0 select-none">!</span>
                 )}
                 <span
                   className={`font-heading text-sm tracking-wide truncate ${
