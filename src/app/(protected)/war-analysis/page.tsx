@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getClanMembers } from "@/lib/cr-api";
 import { BarChart2, AlertTriangle, Trophy, Swords } from "lucide-react";
 import WarAnalysisClient, { MemberAnalysis, WarEntry } from "./WarAnalysisClient";
 
@@ -6,13 +7,27 @@ export const revalidate = 300;
 
 async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotCount: number }> {
   try {
-    const { data: snapshots, error: snapErr } = await supabase
-      .from("war_snapshots")
-      .select("id, season_id, section_index, snapshotted_at")
-      .order("snapshotted_at", { ascending: false })
-      .limit(10);
+    const [snapshotsRes, clanMembersRes] = await Promise.allSettled([
+      supabase
+        .from("war_snapshots")
+        .select("id, season_id, section_index, snapshotted_at")
+        .order("snapshotted_at", { ascending: false })
+        .limit(10),
+      getClanMembers(),
+    ]);
 
-    if (snapErr || !snapshots?.length) return { members: [], snapshotCount: 0 };
+    const snapshots =
+      snapshotsRes.status === "fulfilled" ? snapshotsRes.value.data ?? [] : [];
+    const clanMemberItems =
+      clanMembersRes.status === "fulfilled" ? clanMembersRes.value?.items ?? [] : [];
+
+    // Build a map of tag → clanRank for current members only
+    const currentMemberRanks = new Map<string, number>(
+      clanMemberItems.map((m: { tag: string; clanRank: number }) => [m.tag, m.clanRank])
+    );
+    const currentMemberTags = new Set(currentMemberRanks.keys());
+
+    if (!snapshots.length) return { members: [], snapshotCount: 0 };
 
     const snapshotIds = snapshots.map((s) => s.id);
 
@@ -24,15 +39,20 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
     if (statsErr || !stats?.length) return { members: [], snapshotCount: snapshots.length };
 
     const snapshotMap = new Map(
-      snapshots.map((s) => ({
-        key: s.id,
-        val: { seasonId: s.season_id, sectionIndex: s.section_index, date: s.snapshotted_at },
-      })).map(({ key, val }) => [key, val])
+      snapshots
+        .map((s) => ({
+          key: s.id,
+          val: { seasonId: s.season_id, sectionIndex: s.section_index, date: s.snapshotted_at },
+        }))
+        .map(({ key, val }) => [key, val])
     );
 
     const memberMap = new Map<string, { tag: string; name: string; wars: WarEntry[] }>();
 
     for (const stat of stats) {
+      // Skip players no longer in the clan
+      if (!currentMemberTags.has(stat.player_tag)) continue;
+
       const snap = snapshotMap.get(stat.snapshot_id);
       if (!snap) continue;
 
@@ -59,7 +79,15 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
         const avgFame = Math.round(wars.reduce((s, w) => s + w.fame, 0) / wars.length);
         const avgDecksMissed =
           Math.round((wars.reduce((s, w) => s + w.decksMissed, 0) / wars.length) * 10) / 10;
-        return { tag: member.tag, name: member.name, wars, avgFame, avgDecksMissed, warsCount: wars.length };
+        return {
+          tag: member.tag,
+          name: member.name,
+          wars,
+          avgFame,
+          avgDecksMissed,
+          warsCount: wars.length,
+          clanRank: currentMemberRanks.get(member.tag) ?? null,
+        };
       })
       .sort((a, b) => b.avgFame - a.avgFame);
 
@@ -93,7 +121,7 @@ export default async function WarAnalysisPage() {
               War Analysis
             </h1>
             <p className="text-text-muted text-sm font-body mt-0.5">
-              Member performance across completed wars ·{" "}
+              Current members only · completed wars ·{" "}
               {snapshotCount > 0
                 ? `last ${snapshotCount} war${snapshotCount !== 1 ? "s" : ""} from Supabase`
                 : "no snapshots yet — sync from War Log first"}

@@ -20,6 +20,7 @@ export interface MemberAnalysis {
   avgFame: number;
   avgDecksMissed: number;
   warsCount: number;
+  clanRank: number | null;
 }
 
 const FAME_WEEKLY_THRESHOLD = 1700;
@@ -179,6 +180,11 @@ export default function WarAnalysisClient({
                   <AlertTriangle size={12} className="text-red-clash shrink-0" />
                 ) : (
                   <Shield size={12} className="text-text-muted/40 shrink-0" />
+                )}
+                {member.clanRank != null && (
+                  <span className="font-heading text-[0.6rem] tracking-wide text-text-muted shrink-0">
+                    #{member.clanRank}
+                  </span>
                 )}
                 <span
                   className={`font-heading text-sm tracking-wide truncate ${
