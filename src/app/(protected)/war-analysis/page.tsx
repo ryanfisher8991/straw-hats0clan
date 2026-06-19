@@ -47,7 +47,7 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
         date: snap.date,
         fame: stat.fame,
         decksUsed: stat.decks_used,
-        decksMissed: Math.max(0, 4 - stat.decks_used),
+        decksMissed: Math.max(0, 16 - stat.decks_used),
       });
     }
 

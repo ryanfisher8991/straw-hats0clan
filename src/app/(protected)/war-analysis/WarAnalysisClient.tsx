@@ -79,7 +79,7 @@ function WarRow({ war }: { war: WarEntry }) {
       </span>
 
       <span className={`font-heading text-xs text-right ${war.decksMissed > 0 ? "text-red-clash" : "text-text-secondary"}`}>
-        {war.decksUsed} of 4
+        {war.decksUsed} of 16
       </span>
 
       <span
@@ -153,7 +153,7 @@ export default function WarAnalysisClient({
         const isOpen = expanded === member.tag;
         const isFlagged = member.avgFame < FAME_WEEKLY_THRESHOLD;
         const totalDecksUsed = member.wars.reduce((s, w) => s + w.decksUsed, 0);
-        const maxDecks = member.warsCount * 4;
+        const maxDecks = member.warsCount * 16;
         const avgDecksUsed = Math.round((totalDecksUsed / member.warsCount) * 10) / 10;
 
         return (

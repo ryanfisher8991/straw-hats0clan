@@ -66,7 +66,7 @@ export async function GET() {
         date: snap.date,
         fame: stat.fame,
         decksUsed: stat.decks_used,
-        decksMissed: Math.max(0, 4 - stat.decks_used),
+        decksMissed: Math.max(0, 16 - stat.decks_used),
       })
     }
 
