@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Skull, LogOut, BarChart2 } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Swords, Users, Skull, BarChart2 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",    label: "Dashboard",     icon: LayoutDashboard },
@@ -14,18 +14,12 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  async function handleLogout() {
-    await fetch("/api/auth", { method: "DELETE" });
-    router.push("/login");
-  }
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 min-h-screen bg-navy-950 border-r border-navy-500 shrink-0">
-        <SidebarContent pathname={pathname} onLogout={handleLogout} />
+        <SidebarContent pathname={pathname} />
       </aside>
 
       {/* Mobile bottom bar */}
@@ -50,13 +44,7 @@ export default function Sidebar() {
   );
 }
 
-function SidebarContent({
-  pathname,
-  onLogout,
-}: {
-  pathname: string;
-  onLogout: () => void;
-}) {
+function SidebarContent({ pathname }: { pathname: string }) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -104,16 +92,6 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="px-2 pb-6 border-t border-navy-500 pt-4">
-        <button
-          onClick={onLogout}
-          className="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-r-lg text-sm text-text-muted hover:text-red-clash transition-colors"
-        >
-          <LogOut size={17} strokeWidth={1.5} />
-          <span className="font-heading tracking-wide text-[0.8rem]">Leave</span>
-        </button>
-      </div>
     </div>
   );
 }
