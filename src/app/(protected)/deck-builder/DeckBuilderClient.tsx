@@ -17,6 +17,15 @@ interface Props {
   members: Member[];
 }
 
+// The CR API is stuck on the old 1-14 level scale. The game's current max is 16
+// (raised 14→15 in Dec 2023, 15→16 in Nov 2025). Add 2 to every displayed level.
+const API_LEVEL_OFFSET = 2;
+const GAME_MAX_LEVEL = 16;
+
+function toGameLevel(apiLevel: number): number {
+  return Math.min(apiLevel + API_LEVEL_OFFSET, GAME_MAX_LEVEL);
+}
+
 // ── Scoring ──────────────────────────────────────────────────────────────────
 
 function scoreSet(set: DeckSet, cardMap: Map<string, PlayerCard>): number {
@@ -24,17 +33,17 @@ function scoreSet(set: DeckSet, cardMap: Map<string, PlayerCard>): number {
   let total = 0;
   for (const card of allCards) {
     const pc = cardMap.get(normalizeCardName(card.name));
-    if (pc) total += pc.level / pc.maxLevel;
+    if (pc) total += toGameLevel(pc.level) / GAME_MAX_LEVEL;
   }
   return total / allCards.length;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function levelColor(level: number, maxLevel: number): string {
-  const r = level / maxLevel;
-  if (r >= 1) return "#39ff14";
-  if (r >= 0.9) return "#fbbf24";
+function levelColor(gameLevel: number): string {
+  const r = gameLevel / GAME_MAX_LEVEL;
+  if (r >= 1)    return "#39ff14";
+  if (r >= 0.9)  return "#fbbf24";
   if (r >= 0.75) return "#f97316";
   return "#ef4444";
 }
@@ -55,10 +64,9 @@ function CardCell({
   isEvo?: boolean;
   playerCard?: PlayerCard;
 }) {
-  const level = playerCard?.level ?? 0;
-  const maxLevel = playerCard?.maxLevel ?? 14;
+  const gameLevel = playerCard ? toGameLevel(playerCard.level) : 0;
   const hasCard = !!playerCard;
-  const color = hasCard ? levelColor(level, maxLevel) : "#4a5568";
+  const color = hasCard ? levelColor(gameLevel) : "#4a5568";
   const iconSrc = playerCard?.iconUrls?.medium;
   const displayName = cardName
     .replace("P.E.K.K.A", "PEKKA")
@@ -87,7 +95,7 @@ function CardCell({
         {displayName}
       </span>
       <span className="font-display text-[0.6rem]" style={{ color }}>
-        {hasCard ? `${level}/${maxLevel}` : "—"}
+        {hasCard ? `${gameLevel}/${GAME_MAX_LEVEL}` : "—"}
       </span>
     </div>
   );
@@ -110,7 +118,7 @@ function DeckCard({
     let t = 0;
     for (const c of deck.cards) {
       const pc = cardMap.get(normalizeCardName(c.name));
-      if (pc) t += pc.level / pc.maxLevel;
+      if (pc) t += toGameLevel(pc.level) / GAME_MAX_LEVEL;
     }
     return t / deck.cards.length;
   })();
@@ -150,7 +158,7 @@ function DeckCard({
           <p className="font-heading text-xs tracking-wider text-text-primary">{deck.label}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="font-display text-xs" style={{ color: levelColor(Math.round(deckScore * 14), 14) }}>
+          <span className="font-display text-xs" style={{ color: levelColor(Math.round(deckScore * GAME_MAX_LEVEL)) }}>
             {Math.round(deckScore * 100)}%
           </span>
           <button
