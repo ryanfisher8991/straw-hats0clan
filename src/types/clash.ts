@@ -36,6 +36,7 @@ export interface PlayerCard {
   evolutionLevel?: number
   maxLevel: number
   count: number
+  rarity?: string
   iconUrls: { medium: string }
 }
 

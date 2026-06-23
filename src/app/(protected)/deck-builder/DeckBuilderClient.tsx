@@ -57,11 +57,12 @@ function fitBadge(score: number): { label: string; color: string; border: string
 
 // ── Card cell ────────────────────────────────────────────────────────────────
 
+const HERO_RARITIES = new Set(["champion", "hero"]);
+
 function CardCell({
-  cardName, isEvo, playerCard,
+  cardName, playerCard,
 }: {
   cardName: string;
-  isEvo?: boolean;
   playerCard?: PlayerCard;
 }) {
   const gameLevel = playerCard ? toGameLevel(playerCard.level) : 0;
@@ -72,8 +73,12 @@ function CardCell({
     .replace("P.E.K.K.A", "PEKKA")
     .replace("Mini P.E.K.K.A", "Mini PEKKA");
 
+  const hasEvo = (playerCard?.evolutionLevel ?? 0) > 0;
+  const isHero = HERO_RARITIES.has((playerCard?.rarity ?? "").toLowerCase());
+
   return (
-    <div className={`flex flex-col items-center gap-1 ${!hasCard ? "opacity-35" : ""}`}>
+    <div className={`flex flex-col items-center gap-0.5 ${!hasCard ? "opacity-35" : ""}`}>
+      {/* Card image */}
       <div className="relative">
         <div className="w-12 h-12 rounded-lg overflow-hidden border border-navy-500/60 bg-navy-800 flex items-center justify-center">
           {iconSrc ? (
@@ -82,21 +87,41 @@ function CardCell({
             <Swords size={14} className="text-navy-500" strokeWidth={1} />
           )}
         </div>
-        {isEvo && (
+
+        {/* EVO badge — player actually has evo unlocked */}
+        {hasEvo && (
           <span
-            className="absolute -top-1 -right-1 font-heading text-[0.4rem] tracking-tight px-0.5 py-px rounded font-bold leading-tight"
-            style={{ background: "#38bdf8", color: "#0f172a" }}
+            className="absolute -top-1 -right-1 font-heading text-[0.4rem] tracking-tight px-1 py-px rounded-sm font-bold leading-tight"
+            style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)", color: "#fff" }}
           >
             EVO
           </span>
         )}
+
+        {/* Hero/Champion ability badge */}
+        {isHero && !hasEvo && (
+          <span
+            className="absolute -top-1 -right-1 font-heading text-[0.4rem] tracking-tight px-1 py-px rounded-sm font-bold leading-tight"
+            style={{ background: "linear-gradient(135deg,#f59e0b,#ef4444)", color: "#fff" }}
+          >
+            HERO
+          </span>
+        )}
       </div>
-      <span className="font-heading text-[0.47rem] tracking-wide text-text-muted text-center leading-tight max-w-[52px] truncate">
+
+      {/* Card name */}
+      <span className="font-heading text-[0.47rem] tracking-wide text-text-muted text-center leading-tight max-w-[52px] truncate mt-0.5">
         {displayName}
       </span>
-      <span className="font-display text-[0.6rem]" style={{ color }}>
-        {hasCard ? `${gameLevel}/${GAME_MAX_LEVEL}` : "—"}
-      </span>
+
+      {/* Level */}
+      {hasCard ? (
+        <span className="font-heading text-[0.55rem] tracking-wide" style={{ color }}>
+          lvl {gameLevel}
+        </span>
+      ) : (
+        <span className="font-heading text-[0.5rem] text-navy-500">missing</span>
+      )}
     </div>
   );
 }
@@ -183,7 +208,6 @@ function DeckCard({
           <CardCell
             key={i}
             cardName={card.name}
-            isEvo={card.isEvo}
             playerCard={cardMap.get(normalizeCardName(card.name))}
           />
         ))}
