@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Skull, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Swords, Users, Skull, BarChart2, Layers } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard",    label: "Dashboard",  mobileLabel: "Home",     icon: LayoutDashboard },
-  { href: "/war",          label: "War Log",    mobileLabel: "War Log",  icon: Swords },
+  { href: "/dashboard",    label: "Dashboard",    mobileLabel: "Home",     icon: LayoutDashboard },
+  { href: "/war",          label: "War Log",      mobileLabel: "War",      icon: Swords },
   { href: "/war-analysis", label: "War Analysis", mobileLabel: "Analysis", icon: BarChart2 },
-  { href: "/members",      label: "Members",    mobileLabel: "Members",  icon: Users },
-  { href: "/graveyard",    label: "Graveyard",  mobileLabel: "Graveyard", icon: Skull },
+  { href: "/deck-builder", label: "Deck Builder", mobileLabel: "Decks",    icon: Layers },
+  { href: "/members",      label: "Members",      mobileLabel: "Members",  icon: Users },
+  { href: "/graveyard",    label: "Graveyard",    mobileLabel: "RIP",      icon: Skull },
 ];
 
 export default function Sidebar() {
