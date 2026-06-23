@@ -27,6 +27,48 @@ async function getData() {
   }
 }
 
+async function getMostImproved(currentMemberTags: Set<string>): Promise<{ name: string; delta: number } | null> {
+  // Get the last 2 completed war snapshots
+  const { data: snapshots } = await supabase
+    .from("war_snapshots")
+    .select("id")
+    .order("snapshotted_at", { ascending: false })
+    .limit(2);
+
+  if (!snapshots || snapshots.length < 2) return null;
+
+  const [latestId, previousId] = snapshots.map(s => s.id);
+
+  const { data: stats } = await supabase
+    .from("war_member_stats")
+    .select("player_tag, player_name, fame, snapshot_id")
+    .in("snapshot_id", [latestId, previousId]);
+
+  if (!stats?.length) return null;
+
+  const latestFame = new Map<string, { name: string; fame: number }>();
+  const previousFame = new Map<string, number>();
+
+  for (const row of stats) {
+    if (row.snapshot_id === latestId) latestFame.set(row.player_tag, { name: row.player_name, fame: row.fame });
+    if (row.snapshot_id === previousId) previousFame.set(row.player_tag, row.fame);
+  }
+
+  let bestTag = "";
+  let bestDelta = -Infinity;
+
+  for (const [tag, { fame }] of latestFame) {
+    // Must appear in both wars (not a new member) AND still be in the clan
+    if (!previousFame.has(tag)) continue;
+    if (!currentMemberTags.has(tag)) continue;
+    const delta = fame - previousFame.get(tag)!;
+    if (delta > bestDelta) { bestDelta = delta; bestTag = tag; }
+  }
+
+  if (!bestTag || bestDelta <= 0) return null;
+  return { name: latestFame.get(bestTag)!.name, delta: bestDelta };
+}
+
 async function getTrophyDeltas(): Promise<Map<string, number>> {
   const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
   const { data } = await supabase
@@ -59,6 +101,9 @@ export default async function DashboardPage() {
     getData(),
     getTrophyDeltas(),
   ]);
+
+  const currentMemberTags = new Set<string>(members.map((m: ClanMember) => m.tag));
+  const mostImproved = await getMostImproved(currentMemberTags);
 
   // War Hero: top fame participant in current race
   const raceParticipants: { tag: string; name: string; fame: number }[] =
@@ -113,7 +158,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Spotlight cards */}
-      <SpotlightCards warHero={warHero} topDonor={topDonor} risingStar={risingStar} />
+      <SpotlightCards warHero={warHero} topDonor={topDonor} risingStar={risingStar} mostImproved={mostImproved} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

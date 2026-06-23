@@ -1,11 +1,12 @@
 "use client";
 
-import { Flame, Heart, TrendingUp } from "lucide-react";
+import { Flame, Heart, TrendingUp, Zap } from "lucide-react";
 
 interface SpotlightData {
   warHero: { name: string; fame: number } | null;
   topDonor: { name: string; donations: number } | null;
   risingStar: { name: string; delta: number } | null;
+  mostImproved: { name: string; delta: number } | null;
 }
 
 const WAR_RANKS = [
@@ -128,13 +129,13 @@ function SpotlightCard({ label, sublabel, icon, playerName, stat, statLabel, glo
   );
 }
 
-export default function SpotlightCards({ warHero, topDonor, risingStar }: SpotlightData) {
+export default function SpotlightCards({ warHero, topDonor, risingStar, mostImproved }: SpotlightData) {
   return (
     <div className="mb-8">
       <p className="font-heading text-[0.6rem] tracking-[0.2em] text-text-muted uppercase mb-4">
         This Week&apos;s Standouts
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SpotlightCard
           label="War Hero"
           sublabel="Current Race"
@@ -165,6 +166,16 @@ export default function SpotlightCards({ warHero, topDonor, risingStar }: Spotli
           statLabel="trophies"
           glowColor="#38bdf8"
           delay="0.55s"
+        />
+        <SpotlightCard
+          label="Most Improved"
+          sublabel="War Fame Gain"
+          icon={<Zap size={13} strokeWidth={1.5} style={{ color: "#e879f9" }} />}
+          playerName={mostImproved?.name ?? null}
+          stat={mostImproved ? `+${mostImproved.delta.toLocaleString()}` : "—"}
+          statLabel="fame vs last war"
+          glowColor="#e879f9"
+          delay="0.65s"
         />
       </div>
     </div>
