@@ -152,9 +152,6 @@ export default function RacePanel({ seasonId, sectionIndex, totalFame, participa
             <h2 className="font-heading text-sm tracking-wider text-text-primary">Current River Race</h2>
             <span className="font-heading text-[0.6rem] tracking-wider text-green-clash uppercase">Live</span>
           </div>
-          <p className="text-text-muted text-xs font-body mb-3">
-            Season {seasonId} · Week {sectionIndex + 1}
-          </p>
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-1.5 bg-navy-800 rounded-full px-3 py-1 border border-navy-600">
               <TrendingUp size={11} className="text-gold-400" strokeWidth={1.5} />

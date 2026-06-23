@@ -47,7 +47,7 @@ const POSITION_STYLES: Record<number, { label: string; class: string }> = {
 function formatDate(dateStr: string) {
   if (!dateStr) return "—";
   const y = dateStr.slice(0, 4), m = dateStr.slice(4, 6), d = dateStr.slice(6, 8);
-  return new Date(`${y}-${m}-${d}`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return `${m}/${d}/${y}`;
 }
 
 function getOurEntry(item: RaceItem): Standing | undefined {
@@ -97,11 +97,7 @@ export default function WarLogClient({ races }: { races: RaceItem[] }) {
 
               {/* Race info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <span className="font-heading text-sm tracking-wide text-text-primary">Season {race.seasonId}</span>
-                  <span className="font-heading text-xs text-text-muted tracking-wider">· Week {race.sectionIndex + 1}</span>
-                </div>
-                <p className="text-text-muted text-xs font-body mt-0.5">{formatDate(race.createdDate ?? "")}</p>
+                <p className="font-heading text-sm tracking-wide text-text-primary">{formatDate(race.createdDate ?? "")}</p>
               </div>
 
               {/* Stats */}
