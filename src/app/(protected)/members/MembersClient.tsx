@@ -34,12 +34,12 @@ function formatLastSeen(lastSeen: string): string {
 }
 
 const WAR_RANKS = [
-  { name: "Hashira",   min: 59300,  color: "text-red-400",    border: "border-red-500/50",    bg: "bg-red-900/20"    },
-  { name: "Special Grade", min: 29200,  color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-900/20" },
-  { name: "Diamond",   min: 14400,  color: "text-cyan-400",   border: "border-cyan-500/50",   bg: "bg-cyan-900/20"   },
-  { name: "Gold",      min: 7100,   color: "text-gold-400",   border: "border-gold-700/50",   bg: "bg-gold-700/15"   },
-  { name: "Silver",    min: 3500,   color: "text-slate-300",  border: "border-slate-500/50",  bg: "bg-slate-700/20"  },
-  { name: "Copper",    min: 0,      color: "text-amber-700",  border: "border-amber-800/50",  bg: "bg-amber-900/20"  },
+  { name: "Hashira",       min: 60000, color: "text-[#39ff14]",  border: "border-[#39ff14]/50", bg: "bg-[#39ff14]/10"  },
+  { name: "Special Grade", min: 29200, color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-900/20" },
+  { name: "Diamond",       min: 14400, color: "text-cyan-400",   border: "border-cyan-500/50",   bg: "bg-cyan-900/20"   },
+  { name: "Gold",          min: 7100,  color: "text-gold-400",   border: "border-gold-700/50",   bg: "bg-gold-700/15"   },
+  { name: "Silver",        min: 3500,  color: "text-slate-300",  border: "border-slate-500/50",  bg: "bg-slate-700/20"  },
+  { name: "Copper",        min: 0,     color: "text-amber-700",  border: "border-amber-800/50",  bg: "bg-amber-900/20"  },
 ] as const;
 
 function getWarRank(fame: number) {

@@ -9,12 +9,12 @@ interface SpotlightData {
 }
 
 const WAR_RANKS = [
-  { name: "Hashira",   min: 59300,  color: "#f87171" },
-  { name: "Special Grade", min: 29200,  color: "#c084fc" },
-  { name: "Diamond",   min: 14400,  color: "#22d3ee" },
-  { name: "Gold",      min: 7100,   color: "#fbbf24" },
-  { name: "Silver",    min: 3500,   color: "#94a3b8" },
-  { name: "Copper",    min: 0,      color: "#b45309" },
+  { name: "Hashira",       min: 60000, color: "#39ff14" },
+  { name: "Special Grade", min: 29200, color: "#c084fc" },
+  { name: "Diamond",       min: 14400, color: "#22d3ee" },
+  { name: "Gold",          min: 7100,  color: "#fbbf24" },
+  { name: "Silver",        min: 3500,  color: "#94a3b8" },
+  { name: "Copper",        min: 0,     color: "#b45309" },
 ];
 
 function getWarRank(fame: number) {

@@ -26,6 +26,36 @@ export interface MemberAnalysis {
 const FAME_WEEKLY_THRESHOLD = 1700;
 const FAME_WAR_THRESHOLD = 850;
 
+const AVG_FAME_RANKS = [
+  { name: "Clash God",       min: 3400, color: "#ff9500", border: "border-[#ff9500]/40", bg: "bg-[#ff9500]/10" },
+  { name: "First Moon",      min: 3200, color: "#e2e8f0", border: "border-slate-300/40",  bg: "bg-slate-700/20"  },
+  { name: "Monarch",         min: 3000, color: "#c084fc", border: "border-purple-500/40", bg: "bg-purple-900/15" },
+  { name: "Wizard King",     min: 2800, color: "#22d3ee", border: "border-cyan-500/40",   bg: "bg-cyan-900/15"   },
+  { name: "Titan",           min: 2600, color: "#fb923c", border: "border-orange-500/40", bg: "bg-orange-900/15" },
+  { name: "Hero",            min: 2400, color: "#4ade80", border: "border-green-500/40",  bg: "bg-green-900/15"  },
+  { name: "Soul Reaper",     min: 2200, color: "#60a5fa", border: "border-blue-500/40",   bg: "bg-blue-900/15"   },
+  { name: "Hunter",          min: 2000, color: "#fbbf24", border: "border-amber-500/40",  bg: "bg-amber-900/15"  },
+  { name: "State Alchemist", min: 1800, color: "#f87171", border: "border-red-500/40",    bg: "bg-red-900/15"    },
+  { name: "Genin",           min: 1200, color: "#94a3b8", border: "border-slate-500/40",  bg: "bg-slate-800/20"  },
+  { name: "Ghoul",           min: 0,    color: "#617090", border: "border-navy-400/40",   bg: "bg-navy-700/20"   },
+];
+
+function getAvgFameRank(avgFame: number) {
+  return AVG_FAME_RANKS.find(r => avgFame >= r.min) ?? AVG_FAME_RANKS[AVG_FAME_RANKS.length - 1];
+}
+
+function AvgFameRankBadge({ avgFame }: { avgFame: number }) {
+  const rank = getAvgFameRank(avgFame);
+  return (
+    <span
+      className={`font-heading text-[0.5rem] tracking-wider uppercase px-1.5 py-0.5 rounded border ${rank.border} ${rank.bg} hidden sm:inline`}
+      style={{ color: rank.color }}
+    >
+      {rank.name}
+    </span>
+  );
+}
+
 function FameBar({ value, max = 2400 }: { value: number; max?: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   const color =
@@ -197,8 +227,8 @@ export default function WarAnalysisClient({
                 </span>
               </div>
 
-              {/* Avg Fame */}
-              <div className="text-right">
+              {/* Avg Fame + rank badge */}
+              <div className="flex flex-col items-end gap-0.5">
                 <span
                   className={`font-display text-sm ${
                     isFlagged ? "text-red-clash" : "text-gold-gradient"
@@ -206,6 +236,7 @@ export default function WarAnalysisClient({
                 >
                   {member.avgFame.toLocaleString()}
                 </span>
+                <AvgFameRankBadge avgFame={member.avgFame} />
               </div>
 
               {/* Decks Used total — desktop only */}
