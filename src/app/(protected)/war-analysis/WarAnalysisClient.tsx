@@ -76,10 +76,8 @@ function FameBar({ value, max = 2400 }: { value: number; max?: number }) {
 
 function WarRow({ war }: { war: WarEntry }) {
   const isFlashing = war.fame < FAME_WAR_THRESHOLD;
-  const dateLabel = new Date(war.date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  const d = new Date(war.date);
+  const dateLabel = `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}/${d.getUTCFullYear()}`;
 
   return (
     <div
@@ -90,8 +88,7 @@ function WarRow({ war }: { war: WarEntry }) {
       }`}
     >
       <span className="font-heading text-[0.65rem] tracking-wide text-text-muted">
-        S{war.seasonId}·W{war.sectionIndex + 1}
-        <span className="hidden sm:inline text-text-muted/50 ml-1">· {dateLabel}</span>
+        {dateLabel}
       </span>
 
       <span
