@@ -17,13 +17,18 @@ interface Props {
   members: Member[];
 }
 
-// The CR API is stuck on the old 1-14 level scale. The game's current max is 16
-// (raised 14→15 in Dec 2023, 15→16 in Nov 2025). Add 2 to every displayed level.
-const API_LEVEL_OFFSET = 2;
+// The CR API reports levels on the pre-2022 per-rarity scale. Each rarity has
+// a different API max, so the offset to the current in-game max (16) varies.
+// Formula matches /members player profile page (PlayerProfileClient.tsx).
 const GAME_MAX_LEVEL = 16;
 
-function toGameLevel(apiLevel: number): number {
-  return Math.min(apiLevel + API_LEVEL_OFFSET, GAME_MAX_LEVEL);
+const RARITY_API_MAX: Record<string, number> = {
+  common: 16, rare: 14, epic: 11, legendary: 8, champion: 6,
+};
+
+function toGameLevel(apiLevel: number, rarity?: string): number {
+  const apiMax = RARITY_API_MAX[(rarity ?? "").toLowerCase()] ?? GAME_MAX_LEVEL;
+  return Math.min(apiLevel + (GAME_MAX_LEVEL - apiMax), GAME_MAX_LEVEL);
 }
 
 // ── Scoring ──────────────────────────────────────────────────────────────────
@@ -33,7 +38,7 @@ function scoreSet(set: DeckSet, cardMap: Map<string, PlayerCard>): number {
   let total = 0;
   for (const card of allCards) {
     const pc = cardMap.get(normalizeCardName(card.name));
-    if (pc) total += toGameLevel(pc.level) / GAME_MAX_LEVEL;
+    if (pc) total += toGameLevel(pc.level, pc.rarity) / GAME_MAX_LEVEL;
   }
   return total / allCards.length;
 }
@@ -65,7 +70,7 @@ function CardCell({
   cardName: string;
   playerCard?: PlayerCard;
 }) {
-  const gameLevel = playerCard ? toGameLevel(playerCard.level) : 0;
+  const gameLevel = playerCard ? toGameLevel(playerCard.level, playerCard.rarity) : 0;
   const hasCard = !!playerCard;
   const color = hasCard ? levelColor(gameLevel) : "#4a5568";
   const iconSrc = playerCard?.iconUrls?.medium;
