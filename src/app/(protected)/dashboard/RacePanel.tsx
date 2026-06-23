@@ -32,6 +32,7 @@ interface Props {
   members: Member[];
   clans?: RaceClan[];
   ourTag?: string;
+  clanMemberTags?: Record<string, string[]>;
 }
 
 const CLAN_TAG = "#QPRQ88YP";
@@ -88,13 +89,28 @@ function ParticipantRow({ p }: { p: Participant }) {
   );
 }
 
-function ClanDetail({ clan, onClose }: { clan: RaceClan; onClose: () => void }) {
-  const ps = [...(clan.participants ?? [])].sort((a, b) => {
+function ClanDetail({ clan, currentMemberTags, onClose }: { clan: RaceClan; currentMemberTags?: Set<string>; onClose: () => void }) {
+  const all = clan.participants ?? [];
+  const currentSet = currentMemberTags;
+
+  // Current members only (or all if we don't know)
+  const current = currentSet
+    ? all.filter(p => currentSet.has(p.tag))
+    : all;
+
+  // Ex-members who scored fame — gray at bottom
+  const exWithFame = currentSet
+    ? all.filter(p => !currentSet.has(p.tag) && p.fame > 0)
+    : [];
+
+  const sorted = [...current].sort((a, b) => {
     if (a.fame === 0 && b.fame === 0) return b.decksUsed - a.decksUsed;
     return b.fame - a.fame;
   });
-  const notBattled = ps.filter(p => p.fame === 0 && p.decksUsed === 0);
-  const activeCount = ps.filter(p => p.fame > 0).length;
+  const sortedEx = [...exWithFame].sort((a, b) => b.fame - a.fame);
+
+  const activeCount = current.filter(p => p.fame > 0).length;
+  const notBattled = current.filter(p => p.fame === 0 && p.decksUsed === 0).length;
 
   return (
     <div className="mt-3 rounded-xl border border-navy-500 bg-navy-900/60 overflow-hidden">
@@ -102,7 +118,8 @@ function ClanDetail({ clan, onClose }: { clan: RaceClan; onClose: () => void }) 
         <div>
           <p className="font-heading text-xs tracking-wider text-text-primary">{clan.name}</p>
           <p className="font-heading text-[0.6rem] text-text-muted mt-0.5">
-            {activeCount} fighting · {notBattled.length} haven&apos;t battled · {ps.length} total
+            {activeCount} fighting · {notBattled} haven&apos;t battled · {current.length} members
+            {sortedEx.length > 0 && <span className="text-text-muted/50"> · {sortedEx.length} left clan</span>}
           </p>
         </div>
         <button onClick={onClose} className="text-text-muted hover:text-text-primary transition-colors p-1">
@@ -110,26 +127,43 @@ function ClanDetail({ clan, onClose }: { clan: RaceClan; onClose: () => void }) 
         </button>
       </div>
       <div className="px-3 py-3 space-y-1 max-h-72 overflow-y-auto">
-        {ps.map(p => <ParticipantRow key={p.tag} p={p} />)}
+        {sorted.map(p => <ParticipantRow key={p.tag} p={p} />)}
+        {sortedEx.length > 0 && (
+          <>
+            <p className="font-heading text-[0.55rem] tracking-[0.15em] text-text-muted/50 uppercase pt-2 px-1">Left clan</p>
+            {sortedEx.map(p => (
+              <div key={p.tag} className="opacity-40">
+                <ParticipantRow p={p} />
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-export default function RacePanel({ seasonId, sectionIndex, totalFame, participants, members, clans, ourTag = CLAN_TAG }: Props) {
+export default function RacePanel({ seasonId, sectionIndex, totalFame, participants, members, clans, ourTag = CLAN_TAG, clanMemberTags }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [openClanTag, setOpenClanTag] = useState<string | null>(null);
 
-  const participantMap = new Map(participants.map(p => [p.tag, p]));
+  const currentMemberTagSet = new Set(members.map(m => m.tag));
+
+  // Split our participants: current members vs ex-members
+  const currentParticipants = participants.filter(p => currentMemberTagSet.has(p.tag));
+  const exParticipantsWithFame = participants.filter(p => !currentMemberTagSet.has(p.tag) && p.fame > 0);
+
+  const participantMap = new Map(currentParticipants.map(p => [p.tag, p]));
   const notParticipating = members.filter(m => !participantMap.has(m.tag));
 
-  const sorted = [...participants].sort((a, b) => {
+  const sorted = [...currentParticipants].sort((a, b) => {
     if (a.fame === 0 && b.fame === 0) return b.decksUsed - a.decksUsed;
     return b.fame - a.fame;
   });
+  const sortedEx = [...exParticipantsWithFame].sort((a, b) => b.fame - a.fame);
 
-  const activeCount = participants.filter(p => p.fame > 0).length;
-  const idleCount = participants.filter(p => p.fame === 0 && p.decksUsed === 0).length;
+  const activeCount = currentParticipants.filter(p => p.fame > 0).length;
+  const idleCount = currentParticipants.filter(p => p.fame === 0 && p.decksUsed === 0).length;
   const notInCount = notParticipating.length;
 
   const sortedClans = clans ? [...clans].sort((a, b) => b.fame - a.fame) : [];
@@ -237,7 +271,11 @@ export default function RacePanel({ seasonId, sectionIndex, totalFame, participa
 
                       {/* Opponent roster drill-down */}
                       {isOpen && !isOurs && (
-                        <ClanDetail clan={clan} onClose={() => setOpenClanTag(null)} />
+                        <ClanDetail
+                          clan={clan}
+                          currentMemberTags={clanMemberTags?.[clan.tag] ? new Set(clanMemberTags[clan.tag]) : undefined}
+                          onClose={() => setOpenClanTag(null)}
+                        />
                       )}
                     </div>
                   );
@@ -249,10 +287,20 @@ export default function RacePanel({ seasonId, sectionIndex, totalFame, participa
           {/* Our participants */}
           <div className="mt-4 mb-5">
             <p className="font-heading text-[0.6rem] tracking-[0.15em] text-text-muted uppercase mb-3">
-              Our Participants ({participants.length})
+              Our Participants ({currentParticipants.length})
             </p>
             <div className="space-y-1">
               {sorted.map(p => <ParticipantRow key={p.tag} p={p} />)}
+              {sortedEx.length > 0 && (
+                <>
+                  <p className="font-heading text-[0.55rem] tracking-[0.15em] text-text-muted/50 uppercase pt-2 px-1">Left clan</p>
+                  {sortedEx.map(p => (
+                    <div key={p.tag} className="opacity-40">
+                      <ParticipantRow p={p} />
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
 

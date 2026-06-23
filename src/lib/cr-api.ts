@@ -27,6 +27,10 @@ export function getClanMembers() {
   return crFetch(`/clans/${encodeTag(CLAN_TAG)}/members`)
 }
 
+export function getMembersByTag(tag: string) {
+  return crFetch(`/clans/${encodeTag(tag)}/members`)
+}
+
 export function getCurrentRiverRace() {
   return crFetch(`/clans/${encodeTag(CLAN_TAG)}/currentriverrace`)
 }

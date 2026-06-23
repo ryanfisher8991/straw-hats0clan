@@ -1,4 +1,4 @@
-import { getRiverRaceLog, getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
+import { getRiverRaceLog, getCurrentRiverRace, getClanMembers, getMembersByTag } from "@/lib/cr-api";
 import { Swords, TrendingUp, Users, Trophy } from "lucide-react";
 import WarLogClient from "./WarLogClient";
 import SyncButton from "./SyncButton";
@@ -36,6 +36,27 @@ export default async function WarPage() {
     fame: c.tag === CLAN_TAG ? totalFame : (c.participants ?? []).reduce((s: number, p: { fame: number }) => s + p.fame, 0),
     participants: c.tag === CLAN_TAG ? (ourClan?.participants ?? []) : (c.participants ?? []),
   }));
+
+  // Fetch current member lists for all opponent clans so we can hide ex-members
+  const ourMemberTags = members.map((m: { tag: string }) => m.tag);
+  const clanMemberTags: Record<string, string[]> = { [CLAN_TAG]: ourMemberTags };
+
+  if (current?.clans) {
+    const opponentTags = (current.clans as { tag: string }[])
+      .map(c => c.tag)
+      .filter(t => t !== CLAN_TAG);
+
+    const opponentResults = await Promise.allSettled(
+      opponentTags.map(tag => getMembersByTag(tag))
+    );
+
+    opponentTags.forEach((tag, i) => {
+      const res = opponentResults[i];
+      if (res.status === "fulfilled") {
+        clanMemberTags[tag] = (res.value?.items ?? []).map((m: { tag: string }) => m.tag);
+      }
+    });
+  }
 
   const allRaces = log ?? [];
 
@@ -99,6 +120,7 @@ export default async function WarPage() {
             participants={ourClan.participants ?? []}
             members={members.map((m: { tag: string; name: string }) => ({ tag: m.tag, name: m.name }))}
             clans={racingClans}
+            clanMemberTags={clanMemberTags}
           />
         </div>
       )}
