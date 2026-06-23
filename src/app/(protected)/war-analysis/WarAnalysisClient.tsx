@@ -48,7 +48,7 @@ function AvgFameRankBadge({ avgFame }: { avgFame: number }) {
   const rank = getAvgFameRank(avgFame);
   return (
     <span
-      className={`font-heading text-[0.5rem] tracking-wider uppercase px-1.5 py-0.5 rounded border ${rank.border} ${rank.bg} hidden sm:inline`}
+      className={`font-heading text-[0.5rem] tracking-wider uppercase px-1.5 py-0.5 rounded border ${rank.border} ${rank.bg} shrink-0`}
       style={{ color: rank.color }}
     >
       {rank.name}
@@ -225,10 +225,11 @@ export default function WarAnalysisClient({
                 >
                   {member.name}
                 </span>
+                <AvgFameRankBadge avgFame={member.avgFame} />
               </div>
 
-              {/* Avg Fame + rank badge */}
-              <div className="flex flex-col items-end gap-0.5">
+              {/* Avg Fame */}
+              <div className="text-right">
                 <span
                   className={`font-display text-sm ${
                     isFlagged ? "text-red-clash" : "text-gold-gradient"
@@ -236,7 +237,6 @@ export default function WarAnalysisClient({
                 >
                   {member.avgFame.toLocaleString()}
                 </span>
-                <AvgFameRankBadge avgFame={member.avgFame} />
               </div>
 
               {/* Decks Used total — desktop only */}
