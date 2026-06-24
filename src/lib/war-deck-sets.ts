@@ -974,6 +974,833 @@ export const WAR_DECK_SETS: DeckSet[] = [
     ],
   },
 
+  // ── 2026 META SETS (June 2026 ladder / war duel meta) ─────────────────────
+
+  // Set 21 — Classic four-archetype war quad (most-played 2026 clan war opener)
+  {
+    id: "meta26-01",
+    name: "2.6 Hog / LavaLoon / Log Bait / Graveyard",
+    description: "2.6 Hog Cycle · LavaLoon Lightning · Log Bait Rocket · Graveyard Witch Poison",
+    decks: [
+      {
+        label: "2.6 Hog Cycle",
+        cards: [
+          { name: "Hog Rider" }, { name: "Ice Golem" }, { name: "Musketeer" },
+          { name: "Cannon" }, { name: "Fireball" }, { name: "The Log" },
+          { name: "Ice Spirit" }, { name: "Skeletons" },
+        ],
+      },
+      {
+        label: "LavaLoon Lightning",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Tombstone" },
+          { name: "Zap" }, { name: "Minions" },
+        ],
+      },
+      {
+        label: "Log Bait Rocket",
+        cards: [
+          { name: "Goblin Barrel" }, { name: "Princess" }, { name: "Dart Goblin" },
+          { name: "Goblin Gang" }, { name: "Knight" }, { name: "Inferno Tower" },
+          { name: "Arrows" }, { name: "Rocket" },
+        ],
+      },
+      {
+        label: "Graveyard Witch Poison",
+        cards: [
+          { name: "Graveyard" }, { name: "Witch" }, { name: "Poison" },
+          { name: "Ice Wizard" }, { name: "Goblin Hut" }, { name: "Spear Goblins" },
+          { name: "Barbarian Barrel" }, { name: "Giant Snowball" },
+        ],
+      },
+    ],
+  },
+
+  // Set 22 — PEKKA / Royal Giant / Miner Control / Golem
+  {
+    id: "meta26-02",
+    name: "PEKKA Bridge / RG Monk / Miner Control / Golem",
+    description: "PEKKA Bridge Spam · Royal Giant Monk · Miner Mega Knight · Golem Night Witch",
+    decks: [
+      {
+        label: "PEKKA Bridge Spam",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Poison" },
+          { name: "Zap" }, { name: "Magic Archer" },
+        ],
+      },
+      {
+        label: "Royal Giant Monk",
+        cards: [
+          { name: "Royal Giant" }, { name: "Fisherman" }, { name: "Hunter" },
+          { name: "Monk" }, { name: "Fireball" }, { name: "Electro Spirit" },
+          { name: "The Log" }, { name: "Ice Spirit" },
+        ],
+      },
+      {
+        label: "Miner Mega Knight",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Mega Knight" },
+          { name: "Goblin Gang" }, { name: "Guards" }, { name: "Tornado" },
+          { name: "Giant Snowball" }, { name: "Electro Dragon" },
+        ],
+      },
+      {
+        label: "Golem Night Witch",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Baby Dragon" },
+          { name: "Lumberjack" }, { name: "Lightning" }, { name: "Skeleton Army" },
+          { name: "Arrows" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 23 — Evo-heavy set (June 2026 Evo meta)
+  {
+    id: "meta26-03",
+    name: "Evo RG / Evo Log Bait / Electro Giant / Giant Graveyard",
+    description: "Evo Royal Giant · Evo Log Bait · Electro Giant Lightning · Giant Graveyard",
+    decks: [
+      {
+        label: "Evo Royal Giant",
+        cards: [
+          { name: "Royal Giant", isEvo: true }, { name: "Fisherman" }, { name: "Hunter" },
+          { name: "Monk" }, { name: "Fireball" }, { name: "Electro Spirit" },
+          { name: "Giant Snowball" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Evo Log Bait",
+        cards: [
+          { name: "Goblin Barrel", isEvo: true }, { name: "Princess", isEvo: true },
+          { name: "Dart Goblin" }, { name: "Goblin Gang" },
+          { name: "Knight", isEvo: true }, { name: "The Log" },
+          { name: "Ice Spirit" }, { name: "Inferno Tower" },
+        ],
+      },
+      {
+        label: "Electro Giant Lightning",
+        cards: [
+          { name: "Electro Giant" }, { name: "Lightning" }, { name: "Tornado" },
+          { name: "Miner" }, { name: "Bomber" }, { name: "Zap" },
+          { name: "Guards" }, { name: "Electro Dragon" },
+        ],
+      },
+      {
+        label: "Giant Graveyard",
+        cards: [
+          { name: "Giant" }, { name: "Graveyard" }, { name: "Bowler" },
+          { name: "Baby Dragon" }, { name: "Poison" }, { name: "Arrows" },
+          { name: "Skeleton Army" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 24 — Hog EQ / Balloon Miner / Goblin Drill / Battle Ram
+  {
+    id: "meta26-04",
+    name: "Hog EQ / Balloon Miner / Goblin Drill / Battle Ram",
+    description: "Hog Earthquake · Balloon Miner · Goblin Drill Tesla · PEKKA Battle Ram",
+    decks: [
+      {
+        label: "Hog Earthquake",
+        cards: [
+          { name: "Hog Rider" }, { name: "Firecracker" }, { name: "Cannon" },
+          { name: "Earthquake" }, { name: "Ice Spirit" }, { name: "The Log" },
+          { name: "Skeletons" }, { name: "Golden Knight" },
+        ],
+      },
+      {
+        label: "Balloon Miner",
+        cards: [
+          { name: "Balloon" }, { name: "Miner" }, { name: "Inferno Dragon" },
+          { name: "Goblin Cage" }, { name: "Arrows" }, { name: "Guards" },
+          { name: "Zap" }, { name: "Bomb Tower" },
+        ],
+      },
+      {
+        label: "Goblin Drill Tesla",
+        cards: [
+          { name: "Goblin Drill" }, { name: "Giant Snowball" }, { name: "Tesla" },
+          { name: "Goblin Demolisher" }, { name: "Poison" }, { name: "Knight" },
+          { name: "Goblins" }, { name: "Fire Spirit" },
+        ],
+      },
+      {
+        label: "PEKKA Battle Ram",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Lumberjack" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Bandit" },
+          { name: "Fireball" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 25 — Miner Vines / LavaLoon / Evo Furnace / Mortar
+  {
+    id: "meta26-05",
+    name: "Miner Vines / LavaLoon / Evo Furnace / Mortar",
+    description: "3.0 Miner Vines Cycle · LavaLoon · Evo Furnace Goblin Drill · Mortar Archers",
+    decks: [
+      {
+        label: "3.0 Miner Vines",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Goblin Gang" },
+          { name: "Guards" }, { name: "Ice Spirit" }, { name: "The Log" },
+          { name: "Electro Spirit" }, { name: "Vines" },
+        ],
+      },
+      {
+        label: "LavaLoon Arrows",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Tombstone" },
+          { name: "Minions" }, { name: "Arrows" },
+        ],
+      },
+      {
+        label: "Evo Furnace Drill",
+        cards: [
+          { name: "Furnace", isEvo: true }, { name: "Cannon", isEvo: true },
+          { name: "Skeleton Army" }, { name: "Goblin Barrel" },
+          { name: "Knight" }, { name: "Poison" },
+          { name: "Giant Snowball" }, { name: "Heal Spirit" },
+        ],
+      },
+      {
+        label: "Mortar Cycle",
+        cards: [
+          { name: "Mortar" }, { name: "Archers" }, { name: "Bats" },
+          { name: "Spear Goblins" }, { name: "Zap" }, { name: "Fireball" },
+          { name: "Royal Delivery" }, { name: "Tesla" },
+        ],
+      },
+    ],
+  },
+
+  // Set 26 — Evo Executioner "War God" (June 2026 meta)
+  {
+    id: "meta26-06",
+    name: "Evo Executioner / Graveyard / PEKKA / Royal Hogs",
+    description: "Evo Executioner Balloon (War God) · Graveyard Control · PEKKA · Royal Hogs EQ",
+    decks: [
+      {
+        label: "Evo Executioner Balloon",
+        cards: [
+          { name: "Executioner", isEvo: true }, { name: "Balloon" }, { name: "Miner" },
+          { name: "Vines" }, { name: "Guards" }, { name: "Tornado" },
+          { name: "Cannon" }, { name: "Ice Spirit" },
+        ],
+      },
+      {
+        label: "Graveyard Witch Control",
+        cards: [
+          { name: "Graveyard" }, { name: "Witch" }, { name: "Knight" },
+          { name: "Poison" }, { name: "Ice Wizard" }, { name: "Goblin Hut" },
+          { name: "Spear Goblins" }, { name: "The Log" },
+        ],
+      },
+      {
+        label: "PEKKA Bridge Spam",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Magic Archer" },
+          { name: "Zap" }, { name: "Barbarian Barrel" },
+        ],
+      },
+      {
+        label: "Royal Hogs Earthquake",
+        cards: [
+          { name: "Royal Hogs" }, { name: "Archer Queen" }, { name: "Fisherman" },
+          { name: "Tesla" }, { name: "Earthquake" }, { name: "Skeletons" },
+          { name: "Royal Delivery" }, { name: "Fireball" },
+        ],
+      },
+    ],
+  },
+
+  // Set 27 — Evo Princess Hog / Giant Graveyard / Golem / PEKKA
+  {
+    id: "meta26-07",
+    name: "Evo Princess Hog / Giant Graveyard / Golem / Bridge Spam",
+    description: "Evo Princess Hog Cycle · Giant Graveyard · Golem Lightning · PEKKA Bridge",
+    decks: [
+      {
+        label: "Evo Princess Hog",
+        cards: [
+          { name: "Hog Rider" }, { name: "Princess", isEvo: true }, { name: "Musketeer" },
+          { name: "Cannon", isEvo: true }, { name: "Fireball" }, { name: "Ice Golem" },
+          { name: "Skeletons", isEvo: true }, { name: "The Log" },
+        ],
+      },
+      {
+        label: "Giant Graveyard",
+        cards: [
+          { name: "Giant" }, { name: "Graveyard" }, { name: "Bowler" },
+          { name: "Baby Dragon" }, { name: "Poison" }, { name: "Tombstone" },
+          { name: "Arrows" }, { name: "Electro Wizard" },
+        ],
+      },
+      {
+        label: "Golem Lightning Tornado",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Lumberjack" },
+          { name: "Mega Minion" }, { name: "Lightning" }, { name: "Tornado" },
+          { name: "Barbarian Barrel" }, { name: "Zap" },
+        ],
+      },
+      {
+        label: "PEKKA Bridge Spam",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Magic Archer" }, { name: "Giant Snowball" },
+          { name: "Ice Spirit" }, { name: "Electro Spirit" },
+        ],
+      },
+    ],
+  },
+
+  // Set 28 — RG Hog / Mortar / LavaLoon Goblin Cage / Miner Wall
+  {
+    id: "meta26-08",
+    name: "RG Hog / Mortar / LavaLoon / Miner Wall",
+    description: "Royal Giant Hog · Mortar Little Prince · LavaLoon Goblin Cage · Miner Wall Breakers",
+    decks: [
+      {
+        label: "Royal Giant Hog",
+        cards: [
+          { name: "Royal Giant" }, { name: "Hog Rider" }, { name: "Hunter" },
+          { name: "Fisherman" }, { name: "Fireball" }, { name: "Electro Spirit" },
+          { name: "The Log" }, { name: "Giant Snowball" },
+        ],
+      },
+      {
+        label: "Mortar Little Prince",
+        cards: [
+          { name: "Mortar" }, { name: "Little Prince" }, { name: "Skeleton Barrel" },
+          { name: "Berserker" }, { name: "Arrows" }, { name: "Goblins" },
+          { name: "Fire Spirit" }, { name: "Spear Goblins" },
+        ],
+      },
+      {
+        label: "LavaLoon Goblin Cage",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Minions" },
+          { name: "Goblin Cage" }, { name: "Earthquake" },
+        ],
+      },
+      {
+        label: "Miner Wall Breakers",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Mega Knight" },
+          { name: "Poison" }, { name: "Goblin Gang" }, { name: "Guards" },
+          { name: "Tornado" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 29 — Evo Goblin Bait / Executioner Balloon / RG Monk / Giant Sparky
+  {
+    id: "meta26-09",
+    name: "Evo Goblin Bait / Exe Balloon / RG Monk / Giant Sparky",
+    description: "Evo Goblin Bait · Executioner Balloon · Royal Giant Monk · Giant Sparky",
+    decks: [
+      {
+        label: "Evo Goblin Bait",
+        cards: [
+          { name: "Goblin Barrel", isEvo: true }, { name: "Princess", isEvo: true },
+          { name: "Dart Goblin" }, { name: "Goblin Gang" },
+          { name: "Knight" }, { name: "The Log" },
+          { name: "Inferno Tower" }, { name: "Arrows" },
+        ],
+      },
+      {
+        label: "Executioner Balloon",
+        cards: [
+          { name: "Executioner" }, { name: "Balloon" }, { name: "Miner" },
+          { name: "Vines" }, { name: "Guards" }, { name: "Tornado" },
+          { name: "Cannon" }, { name: "Ice Spirit" },
+        ],
+      },
+      {
+        label: "Royal Giant Monk",
+        cards: [
+          { name: "Royal Giant" }, { name: "Monk" }, { name: "Hunter" },
+          { name: "Fisherman" }, { name: "Lightning" }, { name: "Electro Spirit" },
+          { name: "Giant Snowball" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Giant Sparky",
+        cards: [
+          { name: "Giant" }, { name: "Sparky" }, { name: "Mini P.E.K.K.A" },
+          { name: "Skeleton Army" }, { name: "Minion Horde" }, { name: "Baby Dragon" },
+          { name: "Fireball" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 30 — 3.0 Miner / Evo Hog Musk / LavaLoon / Golem Bowler
+  {
+    id: "meta26-10",
+    name: "3.0 Miner / Evo Hog / LavaLoon / Golem Bowler",
+    description: "3.0 Miner Cycle · Evo Hog Musketeer · LavaLoon · Golem Bowler Poison",
+    decks: [
+      {
+        label: "3.0 Miner Cycle",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Goblin Gang" },
+          { name: "Guards" }, { name: "Ice Spirit" }, { name: "The Log" },
+          { name: "Electro Spirit" }, { name: "Giant Snowball" },
+        ],
+      },
+      {
+        label: "Evo Hog Musketeer",
+        cards: [
+          { name: "Hog Rider" }, { name: "Ice Golem" }, { name: "Musketeer" },
+          { name: "Cannon", isEvo: true }, { name: "Fireball" }, { name: "Zap" },
+          { name: "Skeletons", isEvo: true }, { name: "Heal Spirit" },
+        ],
+      },
+      {
+        label: "LavaLoon Bats",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Tombstone" },
+          { name: "Arrows" }, { name: "Bats" },
+        ],
+      },
+      {
+        label: "Golem Bowler Poison",
+        cards: [
+          { name: "Golem" }, { name: "Bowler" }, { name: "Night Witch" },
+          { name: "Baby Dragon" }, { name: "Tornado" }, { name: "Barbarian Barrel" },
+          { name: "Lumberjack" }, { name: "Poison" },
+        ],
+      },
+    ],
+  },
+
+  // Set 31 — Evo Hog / Goblin Drill / Evo PEKKA / Giant Graveyard
+  {
+    id: "meta26-11",
+    name: "Evo Hog / Goblin Drill / Evo PEKKA / Giant Graveyard",
+    description: "Evo Hog 2.6 · Goblin Drill Golden Knight · Evo PEKKA Bridge · Giant Graveyard",
+    decks: [
+      {
+        label: "Evo Hog 2.6",
+        cards: [
+          { name: "Hog Rider" }, { name: "Ice Golem" }, { name: "Musketeer" },
+          { name: "Cannon", isEvo: true }, { name: "Fireball" },
+          { name: "Skeletons", isEvo: true }, { name: "Ice Spirit" }, { name: "The Log" },
+        ],
+      },
+      {
+        label: "Goblin Drill Golden Knight",
+        cards: [
+          { name: "Goblin Drill" }, { name: "Giant Snowball" }, { name: "Tesla" },
+          { name: "Goblin Demolisher" }, { name: "Golden Knight" }, { name: "Poison" },
+          { name: "Guards" }, { name: "Fire Spirit" },
+        ],
+      },
+      {
+        label: "Evo PEKKA Bridge",
+        cards: [
+          { name: "P.E.K.K.A", isEvo: true }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Magic Archer" },
+          { name: "Zap" }, { name: "Barbarian Barrel" },
+        ],
+      },
+      {
+        label: "Giant Graveyard",
+        cards: [
+          { name: "Giant" }, { name: "Graveyard" }, { name: "Bowler" },
+          { name: "Baby Dragon" }, { name: "Skeleton Army" }, { name: "Lightning" },
+          { name: "Tornado" }, { name: "Arrows" },
+        ],
+      },
+    ],
+  },
+
+  // Set 32 — Royal Hogs / Miner Phoenix / LavaLoon / Golem Battle Ram
+  {
+    id: "meta26-12",
+    name: "Royal Hogs / Miner Phoenix / LavaLoon / Golem",
+    description: "Royal Hogs Archer Queen · Miner Phoenix Control · LavaLoon · Golem Battle Ram",
+    decks: [
+      {
+        label: "Royal Hogs Archer Queen",
+        cards: [
+          { name: "Royal Hogs" }, { name: "Archer Queen" }, { name: "Tesla" },
+          { name: "Ice Spirit" }, { name: "Earthquake" }, { name: "Skeletons" },
+          { name: "The Log" }, { name: "Royal Delivery" },
+        ],
+      },
+      {
+        label: "Miner Phoenix Control",
+        cards: [
+          { name: "Miner" }, { name: "Phoenix" }, { name: "Golden Knight" },
+          { name: "Goblin Curse" }, { name: "Guards" }, { name: "Zap" },
+          { name: "Giant Snowball" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "LavaLoon Goblin Cage",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Minions" },
+          { name: "Arrows" }, { name: "Goblin Cage" },
+        ],
+      },
+      {
+        label: "Golem Battle Ram",
+        cards: [
+          { name: "Golem" }, { name: "Battle Ram" }, { name: "Night Witch" },
+          { name: "Lumberjack" }, { name: "Baby Dragon" }, { name: "Poison" },
+          { name: "Tornado" }, { name: "Barbarian Barrel" },
+        ],
+      },
+    ],
+  },
+
+  // Set 33 — Evo RG / Rocket Miner / Golem Electro Dragon / Goblin Barrel Cycle
+  {
+    id: "meta26-13",
+    name: "Evo RG / Rocket Miner / Golem E-Dragon / Goblin Bait",
+    description: "Evo Royal Giant · Rocket Miner Control · Golem Electro Dragon · Goblin Bait",
+    decks: [
+      {
+        label: "Evo Royal Giant",
+        cards: [
+          { name: "Royal Giant", isEvo: true }, { name: "Fisherman" }, { name: "Monk" },
+          { name: "Hunter" }, { name: "Lightning" }, { name: "Giant Snowball" },
+          { name: "Electro Spirit" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Rocket Miner Control",
+        cards: [
+          { name: "Miner" }, { name: "Rocket" }, { name: "Ice Wizard" },
+          { name: "Valkyrie" }, { name: "Skeleton Army" }, { name: "Guards" },
+          { name: "The Log" }, { name: "Wall Breakers" },
+        ],
+      },
+      {
+        label: "Golem Electro Dragon",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Baby Dragon" },
+          { name: "Lumberjack" }, { name: "Tornado" }, { name: "Barbarian Barrel" },
+          { name: "Electro Dragon" }, { name: "Zap" },
+        ],
+      },
+      {
+        label: "Goblin Barrel Bait",
+        cards: [
+          { name: "Goblin Barrel" }, { name: "Princess" }, { name: "Dart Goblin" },
+          { name: "Goblin Gang" }, { name: "Knight" }, { name: "Inferno Tower" },
+          { name: "Arrows" }, { name: "Ice Spirit" },
+        ],
+      },
+    ],
+  },
+
+  // Set 34 — Electro Giant / Graveyard Freeze / 2.6 Hog / Goblin Drill
+  {
+    id: "meta26-14",
+    name: "Electro Giant / Graveyard Freeze / 2.6 Hog / Goblin Drill",
+    description: "Electro Giant Tornado · Graveyard Freeze · 2.6 Hog Bats · Goblin Drill",
+    decks: [
+      {
+        label: "Electro Giant Tornado",
+        cards: [
+          { name: "Electro Giant" }, { name: "Tornado" }, { name: "Lightning" },
+          { name: "Miner" }, { name: "Zap" }, { name: "Bomber" },
+          { name: "Guards" }, { name: "Electro Spirit" },
+        ],
+      },
+      {
+        label: "Graveyard Freeze",
+        cards: [
+          { name: "Graveyard" }, { name: "Witch" }, { name: "Knight" },
+          { name: "Poison" }, { name: "Freeze" }, { name: "Ice Wizard" },
+          { name: "Skeletons" }, { name: "Barbarian Barrel" },
+        ],
+      },
+      {
+        label: "2.6 Hog Bats",
+        cards: [
+          { name: "Hog Rider" }, { name: "Ice Golem" }, { name: "Musketeer" },
+          { name: "Cannon" }, { name: "Fireball" }, { name: "The Log" },
+          { name: "Ice Spirit" }, { name: "Bats" },
+        ],
+      },
+      {
+        label: "Goblin Drill Control",
+        cards: [
+          { name: "Goblin Drill" }, { name: "Giant Snowball" }, { name: "Tesla" },
+          { name: "Goblin Demolisher" }, { name: "Golden Knight" }, { name: "Arrows" },
+          { name: "Goblin Gang" }, { name: "Fire Spirit" },
+        ],
+      },
+    ],
+  },
+
+  // Set 35 — Evo RG Fisherman / Miner Vines / Golem / Log Bait (June 2026)
+  {
+    id: "meta26-15",
+    name: "Evo RG Fisherman / Miner Vines / Golem / Log Bait",
+    description: "Evo Royal Giant Fisherman · Miner Vines Wall Breakers · Golem Night Witch · Log Bait",
+    decks: [
+      {
+        label: "Evo Royal Giant Fisherman",
+        cards: [
+          { name: "Royal Giant", isEvo: true }, { name: "Fisherman" }, { name: "Hunter" },
+          { name: "Monk" }, { name: "Fireball" }, { name: "Electro Spirit" },
+          { name: "Giant Snowball" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Miner Vines Wall Breakers",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Mega Knight" },
+          { name: "Goblin Gang" }, { name: "Guards" }, { name: "Vines" },
+          { name: "Tornado" }, { name: "Zap" },
+        ],
+      },
+      {
+        label: "Golem Night Witch",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Baby Dragon" },
+          { name: "Lumberjack" }, { name: "Lightning" }, { name: "Skeleton Army" },
+          { name: "Barbarian Barrel" }, { name: "Electro Dragon" },
+        ],
+      },
+      {
+        label: "Log Bait",
+        cards: [
+          { name: "Goblin Barrel" }, { name: "Princess" }, { name: "Dart Goblin" },
+          { name: "Knight" }, { name: "The Log" }, { name: "Inferno Tower" },
+          { name: "Arrows" }, { name: "Ice Spirit" },
+        ],
+      },
+    ],
+  },
+
+  // Set 36 — Evo PEKKA Bridge / Miner Mega / LavaLoon / Furnace Cycle
+  {
+    id: "meta26-16",
+    name: "Evo PEKKA Bridge / Miner Mega / LavaLoon / Furnace Cycle",
+    description: "Evo PEKKA Bridge Spam · Miner Mega Knight Electro Dragon · LavaLoon · Furnace Cycle",
+    decks: [
+      {
+        label: "Evo PEKKA Bridge",
+        cards: [
+          { name: "P.E.K.K.A", isEvo: true }, { name: "Battle Ram", isEvo: true },
+          { name: "Bandit" }, { name: "Royal Ghost" },
+          { name: "Magic Archer" }, { name: "Electro Wizard" },
+          { name: "Goblin Curse" }, { name: "Zap" },
+        ],
+      },
+      {
+        label: "Miner Mega Knight",
+        cards: [
+          { name: "Miner" }, { name: "Wall Breakers" }, { name: "Mega Knight" },
+          { name: "Goblin Gang" }, { name: "Guards" }, { name: "Tornado" },
+          { name: "Giant Snowball" }, { name: "Electro Dragon" },
+        ],
+      },
+      {
+        label: "LavaLoon Guards",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Minions" },
+          { name: "Arrows" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Furnace Cycle",
+        cards: [
+          { name: "Furnace" }, { name: "Goblin Drill" }, { name: "Ice Spirit" },
+          { name: "Skeletons" }, { name: "Knight" }, { name: "Barbarian Barrel" },
+          { name: "Vines" }, { name: "Fireball" },
+        ],
+      },
+    ],
+  },
+
+  // Set 37 — RG Monk / Goblin Barrel / Golem Tornado / Hog EQ (balanced)
+  {
+    id: "meta26-17",
+    name: "RG Monk / Goblin Bait / Golem Tornado / Hog EQ",
+    description: "Royal Giant Monk Lightning · Goblin Barrel Bait · Golem Tornado · Hog Earthquake",
+    decks: [
+      {
+        label: "Royal Giant Monk",
+        cards: [
+          { name: "Royal Giant" }, { name: "Monk" }, { name: "Hunter" },
+          { name: "Fisherman" }, { name: "Lightning" }, { name: "Electro Spirit" },
+          { name: "Giant Snowball" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "Goblin Barrel Bait",
+        cards: [
+          { name: "Goblin Barrel" }, { name: "Princess" }, { name: "Dart Goblin" },
+          { name: "Goblin Gang" }, { name: "Knight" }, { name: "The Log" },
+          { name: "Ice Spirit" }, { name: "Inferno Tower" },
+        ],
+      },
+      {
+        label: "Golem Tornado",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Baby Dragon" },
+          { name: "Lumberjack" }, { name: "Tornado" }, { name: "Barbarian Barrel" },
+          { name: "Skeleton Army" }, { name: "Arrows" },
+        ],
+      },
+      {
+        label: "Hog EQ Golden Knight",
+        cards: [
+          { name: "Hog Rider" }, { name: "Firecracker" }, { name: "Cannon" },
+          { name: "Earthquake" }, { name: "Golden Knight" }, { name: "Skeletons" },
+          { name: "Zap" }, { name: "Fireball" },
+        ],
+      },
+    ],
+  },
+
+  // Set 38 — Evo Executioner / Phoenix Goblin Cage / Battle Ram / Mortar
+  {
+    id: "meta26-18",
+    name: "Evo Executioner / Phoenix Cage / Battle Ram / Mortar",
+    description: "Evo Executioner Balloon · Phoenix Goblin Cage · PEKKA Battle Ram · Mortar Bait",
+    decks: [
+      {
+        label: "Evo Executioner Balloon",
+        cards: [
+          { name: "Executioner", isEvo: true }, { name: "Balloon" }, { name: "Miner" },
+          { name: "Vines" }, { name: "Cannon", isEvo: true }, { name: "Ice Spirit" },
+          { name: "Skeleton Army" }, { name: "Tornado" },
+        ],
+      },
+      {
+        label: "Phoenix Goblin Cage",
+        cards: [
+          { name: "Phoenix" }, { name: "Goblin Cage" }, { name: "Wall Breakers" },
+          { name: "Giant Snowball" }, { name: "Lightning" }, { name: "Guards" },
+          { name: "Zap" }, { name: "Tombstone" },
+        ],
+      },
+      {
+        label: "PEKKA Battle Ram",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Arrows" },
+          { name: "Magic Archer" }, { name: "Barbarian Barrel" },
+        ],
+      },
+      {
+        label: "Mortar Bait",
+        cards: [
+          { name: "Mortar" }, { name: "Skeleton Barrel" }, { name: "Little Prince" },
+          { name: "Berserker" }, { name: "Fireball" }, { name: "Goblin Gang" },
+          { name: "Spear Goblins" }, { name: "The Log" },
+        ],
+      },
+    ],
+  },
+
+  // Set 39 — Hog EQ / Giant Graveyard / Royal Hogs / Goblin Drill Boss
+  {
+    id: "meta26-19",
+    name: "Hog EQ / Giant Graveyard / Royal Hogs / Goblin Drill",
+    description: "Hog Earthquake Cycle · Giant Graveyard · Royal Hogs Archer Queen · Goblin Drill Boss",
+    decks: [
+      {
+        label: "Hog Earthquake Cycle",
+        cards: [
+          { name: "Hog Rider" }, { name: "Firecracker" }, { name: "Cannon" },
+          { name: "Earthquake" }, { name: "Ice Spirit" }, { name: "The Log" },
+          { name: "Skeletons" }, { name: "Ice Golem" },
+        ],
+      },
+      {
+        label: "Giant Graveyard",
+        cards: [
+          { name: "Giant" }, { name: "Graveyard" }, { name: "Bowler" },
+          { name: "Baby Dragon" }, { name: "Poison" }, { name: "Tombstone" },
+          { name: "Arrows" }, { name: "Electro Wizard" },
+        ],
+      },
+      {
+        label: "Royal Hogs Archer Queen",
+        cards: [
+          { name: "Royal Hogs" }, { name: "Archer Queen" }, { name: "Fisherman" },
+          { name: "Tesla" }, { name: "Royal Delivery" }, { name: "Barbarian Barrel" },
+          { name: "Fireball" }, { name: "Electro Spirit" },
+        ],
+      },
+      {
+        label: "Goblin Drill Boss",
+        cards: [
+          { name: "Goblin Drill" }, { name: "Giant Snowball" }, { name: "Golden Knight" },
+          { name: "Goblin Demolisher" }, { name: "Goblin Gang" }, { name: "Guards" },
+          { name: "Zap" }, { name: "Rage" },
+        ],
+      },
+    ],
+  },
+
+  // Set 40 — LavaLoon EQ / Evo Goblin Bait / PEKKA Poison / Golem Night Witch
+  {
+    id: "meta26-20",
+    name: "LavaLoon / Evo Goblin Bait / PEKKA Poison / Golem",
+    description: "LavaLoon Earthquake · Evo Goblin Bait · PEKKA Poison · Golem Night Witch",
+    decks: [
+      {
+        label: "LavaLoon Earthquake",
+        cards: [
+          { name: "Lava Hound" }, { name: "Balloon" }, { name: "Inferno Dragon" },
+          { name: "Skeleton Dragons" }, { name: "Lightning" }, { name: "Minions" },
+          { name: "Arrows" }, { name: "Earthquake" },
+        ],
+      },
+      {
+        label: "Evo Goblin Bait",
+        cards: [
+          { name: "Goblin Barrel", isEvo: true }, { name: "Princess", isEvo: true },
+          { name: "Dart Goblin" }, { name: "Goblin Gang" },
+          { name: "Knight", isEvo: true }, { name: "The Log" },
+          { name: "Giant Snowball" }, { name: "Inferno Tower" },
+        ],
+      },
+      {
+        label: "PEKKA Poison Bridge",
+        cards: [
+          { name: "P.E.K.K.A" }, { name: "Battle Ram" }, { name: "Bandit" },
+          { name: "Royal Ghost" }, { name: "Electro Wizard" }, { name: "Magic Archer" },
+          { name: "Poison" }, { name: "Barbarian Barrel" },
+        ],
+      },
+      {
+        label: "Golem Night Witch",
+        cards: [
+          { name: "Golem" }, { name: "Night Witch" }, { name: "Baby Dragon" },
+          { name: "Lumberjack" }, { name: "Tombstone" }, { name: "Tornado" },
+          { name: "Zap" }, { name: "Skeleton Army" },
+        ],
+      },
+    ],
+  },
+
   // ── COMPOSED SETS ──────────────────────────────────────────────────────────
   {
     id: "composed-hog-giant",
