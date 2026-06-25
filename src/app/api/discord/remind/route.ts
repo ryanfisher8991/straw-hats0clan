@@ -49,23 +49,18 @@ export async function GET(req: Request) {
     );
 
     if (needBattle.length === 0) {
-      // Everyone is done — send a celebratory message
       await postToDiscord({
-        embeds: [
-          {
-            title: "⚔️ War Update — All Battles Complete!",
-            description:
-              `All **${doneBattle.length}** active members have finished their war battles for today. Great work, Straw Hats! 🏴‍☠️`,
-            color: 0x39ff14,
-            footer: { text: "Straw Hats Clan War Bot" },
-            timestamp: new Date().toISOString(),
-          },
-        ],
+        embeds: [{
+          title: "🏴‍☠️ The Crew Delivered!",
+          description: `All **${doneBattle.length}** Straw Hats finished their war battles today. Not a single pirate stood down.\n\n*"I don't want to conquer anything. I just think the guy with the most freedom on the seas is the King of the Pirates!"* — Luffy`,
+          color: 0x39ff14,
+          footer: { text: "Straw Hats Clash Royale" },
+          timestamp: new Date().toISOString(),
+        }],
       });
       return Response.json({ sent: true, allDone: true });
     }
 
-    // Build the reminder embed
     const battlesLeft = (p: Participant) => 4 - p.decksUsedToday;
 
     const needLines = needBattle
@@ -79,20 +74,28 @@ export async function GET(req: Request) {
 
     const totalLeft = needBattle.reduce((s, p) => s + battlesLeft(p), 0);
 
+    const REMINDER_LINES = [
+      "The Log Pose doesn't wait. Neither does the war clock. ⏰",
+      "Even Usopp would've battled by now. Get in there. 🎯",
+      "Zoro got lost again — what's your excuse? 🗡️",
+      "Nami is calculating how much this costs the crew. Don't make her. 💰",
+      "Luffy's already eaten and is ready to fight. Are you? 🥩",
+    ];
+    const flavor = REMINDER_LINES[Math.floor(Math.random() * REMINDER_LINES.length)];
+
     await postToDiscord({
-      embeds: [
-        {
-          title: "⚠️ War Reminder — Battles Needed!",
-          description: [
-            `**${needBattle.length}** member${needBattle.length === 1 ? "" : "s"} still ${needBattle.length === 1 ? "has" : "have"} battles to complete (${totalLeft} total battles remaining).\n`,
-            needLines,
-            `\n✅ ${doneBattle.length} member${doneBattle.length === 1 ? "" : "s"} finished all 4 battles.`,
-          ].join("\n"),
-          color: 0xfbbf24,
-          footer: { text: "Straw Hats Clan War Bot • Complete your battles!" },
-          timestamp: new Date().toISOString(),
-        },
-      ],
+      embeds: [{
+        title: "⚔️ War Battle Reminder",
+        description: [
+          `*${flavor}*\n`,
+          `**${needBattle.length}** crew member${needBattle.length === 1 ? "" : "s"} still need${needBattle.length === 1 ? "s" : ""} to fight (${totalLeft} battles remaining):\n`,
+          needLines,
+          `\n✅ ${doneBattle.length} pirate${doneBattle.length === 1 ? "" : "s"} already fought today.`,
+        ].join("\n"),
+        color: 0xfbbf24,
+        footer: { text: "Straw Hats Clash Royale · Don't let the crew down!" },
+        timestamp: new Date().toISOString(),
+      }],
     });
 
     return Response.json({
