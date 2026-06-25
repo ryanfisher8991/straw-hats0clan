@@ -255,3 +255,319 @@ export async function notifyLeaderboard(members: Array<{
     }],
   });
 }
+
+// ── War Day Kickoff ───────────────────────────────────────────────────────────
+
+export async function notifyWarKickoff(memberCount: number, opponentName: string, opponentFame: number) {
+  const webhook = await getWebhook("kickoff");
+  if (!webhook) return;
+
+  const KICKOFF_LINES = [
+    "The Log Pose has locked on. There's no turning back now.",
+    "Luffy's already fired up. Are you?",
+    "The Grand Line doesn't give second chances. Make your battles count.",
+    "Zoro found the arena. Somehow. Let's go.",
+    "Nami checked the weather. Clear skies. Perfect for war.",
+  ];
+  const flavor = KICKOFF_LINES[Math.floor(Math.random() * KICKOFF_LINES.length)];
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "⚔️ War Day Has Started!",
+      description: `*${flavor}*\n\nThe Straw Hats are ready to sail into battle. **${memberCount}** pirates are registered for this war.`,
+      color: 0xFF6B00,
+      fields: [
+        { name: "🏴‍☠️ Enemy Crew", value: opponentName, inline: true },
+        { name: "⚔️ Their Current Fame", value: opponentFame > 0 ? opponentFame.toLocaleString() : "Unknown", inline: true },
+        { name: "🗡️ Decks Per Member", value: "4 battles available", inline: true },
+      ],
+      footer: { text: "Straw Hats Clash Royale · Use all 4 decks!" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Hourly War Check ──────────────────────────────────────────────────────────
+
+export async function notifyHourlyWarCheck(participants: Array<{
+  tag: string; name: string; decksUsedToday: number;
+}>) {
+  const webhook = await getWebhook("hourly");
+  if (!webhook) return;
+
+  const done = participants.filter(p => p.decksUsedToday >= 4);
+  const pending = participants.filter(p => p.decksUsedToday < 4);
+  const totalLeft = pending.reduce((s, p) => s + (4 - p.decksUsedToday), 0);
+  const pct = Math.round((done.length / participants.length) * 100);
+
+  const bar = "█".repeat(Math.round(pct / 10)) + "░".repeat(10 - Math.round(pct / 10));
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "📡 War Progress Update",
+      description: `\`${bar}\` **${pct}%** complete\n\n${done.length}/${participants.length} pirates done · ${totalLeft} battles remaining`,
+      color: pct >= 75 ? 0x39FF14 : pct >= 40 ? 0xF8D978 : 0xF87171,
+      footer: { text: "Straw Hats Clash Royale · Hourly update" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Opponent Scouting ─────────────────────────────────────────────────────────
+
+export async function notifyOpponentScout(opponent: {
+  name: string; tag: string; fame: number; participants: number; clanScore: number;
+}) {
+  const webhook = await getWebhook("scout");
+  if (!webhook) return;
+
+  const SCOUT_LINES = [
+    "Robin studied them. Here's what she found.",
+    "Nami ran the numbers. Don't underestimate them.",
+    "Zoro would ignore this intel. You shouldn't.",
+    "Usopp scouted them. For once he's not exaggerating.",
+  ];
+  const flavor = SCOUT_LINES[Math.floor(Math.random() * SCOUT_LINES.length)];
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "🔍 Enemy Clan Intel",
+      description: `*${flavor}*\n\nKnow your enemy before you fight them.`,
+      color: 0xA78BFA,
+      fields: [
+        { name: "🏴‍☠️ Clan Name", value: opponent.name, inline: true },
+        { name: "🏷️ Tag", value: opponent.tag, inline: true },
+        { name: "⚔️ Current Fame", value: opponent.fame.toLocaleString(), inline: true },
+        { name: "👥 Participants", value: String(opponent.participants), inline: true },
+        { name: "🏆 Clan Score", value: opponent.clanScore > 0 ? opponent.clanScore.toLocaleString() : "N/A", inline: true },
+      ],
+      footer: { text: "Straw Hats Clash Royale · Scouting Report" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Quote of the Day ──────────────────────────────────────────────────────────
+
+const ONE_PIECE_QUOTES = [
+  { quote: "I'm gonna be King of the Pirates!", character: "Monkey D. Luffy" },
+  { quote: "I don't want to conquer anything. I just think the guy with the most freedom on the seas is the King of the Pirates!", character: "Monkey D. Luffy" },
+  { quote: "If you don't take risks, you can't create a future!", character: "Monkey D. Luffy" },
+  { quote: "When the world shoves you around, you just gotta stand up and shove back.", character: "Roronoa Zoro" },
+  { quote: "I'm going to be the world's greatest swordsman! All I have left is my destiny! My name may be infamous... but it's not a name I'm ashamed of!", character: "Roronoa Zoro" },
+  { quote: "Only those who have suffered long can see the light within the shadows.", character: "Roronoa Zoro" },
+  { quote: "There is someone that I must meet again. And until that day... not even Death itself can take my life away!", character: "Roronoa Zoro" },
+  { quote: "You need to accept the fact that you're not the best and have all the will to strive to be better than anyone you face.", character: "Roronoa Zoro" },
+  { quote: "Bring on the hardship. It's preferred in a path of carnage.", character: "Roronoa Zoro" },
+  { quote: "Money is more important than anything else in this world. And nothing is more evil than to take it!", character: "Nami" },
+  { quote: "Even if it means going to hell, I still have to go! I'm a pirate!", character: "Nami" },
+  { quote: "I want to live! Take me out to sea with you!", character: "Nico Robin" },
+  { quote: "I can't use a sword, lie, cheat, harm women, or go against my captain's wishes. That's all.", character: "Sanji" },
+  { quote: "I won't kick a woman, even if I die for it.", character: "Sanji" },
+  { quote: "Men who can't wipe away the tears from a women's eyes aren't real men.", character: "Sanji" },
+  { quote: "You can spill drinks on me, even spit on me. I'll just laugh about it. But I won't let anyone hurt my friends!", character: "Tony Tony Chopper" },
+  { quote: "Bring me another drink! Yohohoho! I am already dead! SKULL JOKE!", character: "Brook" },
+  { quote: "SUPER!", character: "Franky" },
+  { quote: "A man's dream will never die!", character: "Whitebeard" },
+  { quote: "Power isn't determined by your size, but the size of your heart and dreams!", character: "Monkey D. Luffy" },
+  { quote: "The world isn't perfect. But it's there for us, doing the best it can. That's what makes it so damn beautiful.", character: "Roy Mustang" },
+  { quote: "Ace... lives on... within me.", character: "Monkey D. Luffy" },
+  { quote: "People's dreams... have no end!", character: "Marshall D. Teach (Blackbeard)" },
+  { quote: "These are the things I can't do. These are the things I won't do. And these are the things I absolutely will not do.", character: "Zeff" },
+  { quote: "I've set myself to become the King of the Pirates... and if I die trying... then at least I tried!", character: "Monkey D. Luffy" },
+  { quote: "Inherited Will, the Destiny of the Age, and the Dreams of its People. As long as people continue to pursue the meaning of Freedom, these things will never cease to be.", character: "Gol D. Roger" },
+  { quote: "What keeps me going is knowing that somewhere out there, my nakama are still fighting.", character: "Monkey D. Luffy" },
+  { quote: "Justice will prevail, you say? But of course it will! Whoever wins this war becomes justice!", character: "Doflamingo" },
+  { quote: "There is no place on this ocean for a half-hearted dream.", character: "Shanks" },
+  { quote: "Stop counting only those things you have lost. What is gone, is gone.", character: "Jinbe" },
+];
+
+export async function notifyDailyQuote() {
+  const webhook = await getWebhook("quote");
+  if (!webhook) return;
+
+  const q = ONE_PIECE_QUOTES[Math.floor(Math.random() * ONE_PIECE_QUOTES.length)];
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "📜 Quote of the Day",
+      description: `*"${q.quote}"*`,
+      color: 0x5865F2,
+      footer: { text: `— ${q.character} · Straw Hats Clash Royale` },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Donation Leaderboard ──────────────────────────────────────────────────────
+
+export async function notifyDonationLeaderboard(members: Array<{
+  tag: string; name: string; donations: number; donationsReceived: number;
+}>) {
+  const webhook = await getWebhook("donations");
+  if (!webhook) return;
+
+  const sorted = [...members].sort((a, b) => b.donations - a.donations);
+  const top5 = sorted.slice(0, 5);
+  const bottom3 = sorted.slice(-3).reverse();
+  const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+
+  const topLines = top5.map((m, i) =>
+    `${medals[i]} **${m.name}** — ${m.donations.toLocaleString()} donated`
+  ).join("\n");
+
+  const bottomLines = bottom3
+    .filter(m => m.donations < 20)
+    .map(m => `💸 **${m.name}** — ${m.donations} donated *(Nami wants a word with you)*`)
+    .join("\n");
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "💝 Weekly Donation Leaderboard",
+      description: `*Sanji says donations are the love language of the crew.*\n\n${topLines}${bottomLines ? `\n\n**Stragglers:**\n${bottomLines}` : ""}`,
+      color: 0xF472B6,
+      footer: { text: "Straw Hats Clash Royale · Posted every Sunday" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Inactivity Alert ──────────────────────────────────────────────────────────
+
+export async function notifyInactiveMembers(inactive: Array<{
+  name: string; tag: string; donations: number; recentFame: number;
+}>) {
+  const webhook = await getWebhook("inactive");
+  if (!webhook) return;
+
+  const lines = inactive.map(m =>
+    `💤 **${m.name}** — ${m.recentFame} war fame · ${m.donations} donations`
+  ).join("\n");
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "😴 Inactive Members Alert",
+      description: `These crew members haven't been pulling their weight. Not even Usopp would make these excuses.\n\n${lines}\n\n*Consider a conversation before the next war.*`,
+      color: 0xFBBF24,
+      footer: { text: "Straw Hats Clash Royale · Admin Alert" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Member Count Alert ────────────────────────────────────────────────────────
+
+export async function notifyMemberCount(count: number, threshold: number) {
+  const webhook = await getWebhook("member_count");
+  if (!webhook) return;
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "⚠️ Crew is Running Low!",
+      description: `The Thousand Sunny needs more nakama! We're down to **${count}/${threshold}** minimum crew.\n\n*Luffy recruited a whole pirate fleet in one arc. We can find a few more members.*\n\nTime to recruit — post in recruitment channels or check the CR recruitment boards.`,
+      color: 0xF87171,
+      fields: [
+        { name: "Current Members", value: String(count), inline: true },
+        { name: "Minimum Target", value: String(threshold), inline: true },
+        { name: "Spots Open", value: String(50 - count), inline: true },
+      ],
+      footer: { text: "Straw Hats Clash Royale · Recruitment Alert" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Streak Milestone ──────────────────────────────────────────────────────────
+
+const STREAK_FLAVOR: Record<number, string> = {
+  5:  "5 wars in a row with full battles. Zoro is starting to notice you.",
+  10: "10 consecutive wars. You fight like a Straw Hat first mate.",
+  20: "20 wars. Absolute dedication. The crew would follow you anywhere.",
+};
+
+export async function notifyStreakMilestone(player: { name: string; tag: string }, streak: number) {
+  const webhook = await getWebhook("streaks");
+  if (!webhook) return;
+
+  const flavor = STREAK_FLAVOR[streak] ?? `${streak} consecutive wars with all 4 decks used.`;
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: `🔥 ${streak}-War Battle Streak!`,
+      description: `**${player.name}** has used all 4 decks in **${streak} wars in a row**!\n\n*${flavor}*`,
+      color: streak >= 20 ? 0x39FF14 : streak >= 10 ? 0xA78BFA : 0xFF6B00,
+      footer: { text: "Straw Hats Clash Royale · Streak Achievement" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Pre-War Checklist ─────────────────────────────────────────────────────────
+
+export async function notifyPreWarChecklist(hoursLeft: number, memberCount: number) {
+  const webhook = await getWebhook("pre_war");
+  if (!webhook) return;
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "📋 War Starts Soon — Prepare Your Decks!",
+      description: `Training phase ends in approximately **${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}**.\n\n*Zoro sharpens his swords before every battle. Sanji rests his legs. What's your pre-war routine?*`,
+      color: 0x22D3EE,
+      fields: [
+        { name: "✅ Check your deck is set", value: "Make sure your war deck is ready to go", inline: false },
+        { name: "✅ Charge your device", value: "Nothing worse than dying mid-battle", inline: false },
+        { name: "✅ Plan your 4 battles", value: `${memberCount} members are counting on you`, inline: false },
+      ],
+      footer: { text: "Straw Hats Clash Royale · Pre-War Reminder" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Bounty Board ─────────────────────────────────────────────────────────────
+
+export async function notifyBountyBoard(
+  top5: Array<{ name: string; tag: string; fame: number }>,
+  warLabel: string,
+) {
+  const webhook = await getWebhook("bounty");
+  if (!webhook) return;
+
+  const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+  const lines = top5.map((p, i) =>
+    `${medals[i]} **${p.name}** — ${p.fame.toLocaleString()} fame`
+  ).join("\n");
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "🏴‍☠️ Bounty Board — Most Wanted",
+      description: `*The Marines have updated their records. These pirates put up the biggest numbers ever recorded.*\n\n${lines}${warLabel ? `\n\n🏆 Top performance from **${warLabel}**` : ""}`,
+      color: 0xF8D978,
+      footer: { text: "Straw Hats Clash Royale · All-time best single-war fame" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
+// ── Kick Recommendation ───────────────────────────────────────────────────────
+
+export async function notifyKickRecommendation(candidates: Array<{
+  name: string; tag: string; consecutiveZeros: number;
+}>) {
+  const webhook = await getWebhook("kick_alert");
+  if (!webhook) return;
+
+  const lines = candidates.map(c =>
+    `⚠️ **${c.name}** \`${c.tag}\` — 0 fame in last ${c.consecutiveZeros} wars`
+  ).join("\n");
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "🚨 Kick Recommendation — Admin Eyes Only",
+      description: `The following members have contributed **zero fame** in the last 2 or more wars. Even Buggy tries.\n\n${lines}\n\n*Review their profiles and consider a warning or removal before the next war.*`,
+      color: 0xEF4444,
+      footer: { text: "Straw Hats Clash Royale · Admin Alert · Handle with care" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}

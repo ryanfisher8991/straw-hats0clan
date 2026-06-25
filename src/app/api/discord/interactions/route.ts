@@ -39,13 +39,28 @@ export async function POST(req: Request) {
 
   if (interaction.type === APPLICATION_COMMAND) {
     const command = interaction.data?.name;
+    const origin = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    const secret = process.env.CRON_SECRET ?? "";
+    const headers = { Authorization: `Bearer ${secret}` };
 
-    if (command === "warcheck") {
-      return handleWarCheck();
-    }
+    if (command === "warcheck")  return handleWarCheck();
+    if (command === "warremind") return handleWarRemind();
+    if (command === "setup")     return handleSetup();
 
-    if (command === "warremind") {
-      return handleWarRemind();
+    // Proxy commands to their feature API routes
+    const PROXY: Record<string, string> = {
+      warday:    "/api/discord/kickoff",
+      scout:     "/api/discord/scout",
+      donations: "/api/discord/donations",
+      inactive:  "/api/discord/inactive",
+      streaks:   "/api/discord/streaks",
+      bounty:    "/api/discord/bounty",
+      quote:     "/api/discord/quote",
+    };
+
+    if (command && PROXY[command]) {
+      fetch(`${origin}${PROXY[command]}`, { method: "POST", headers }).catch(console.error);
+      return discordReply(`⏳ Running **/${command}**… check the channel in a moment.`);
     }
   }
 
@@ -130,6 +145,34 @@ async function handleWarRemind() {
   } catch (err) {
     return discordReply(`❌ Failed to send reminder: ${String(err)}`);
   }
+}
+
+// ── /setup ────────────────────────────────────────────────────────────────────
+
+function handleSetup() {
+  return discordReply([
+    "🏴‍☠️ **Straw Hats Discord Bot — Setup Guide**",
+    "",
+    "Each feature posts to a channel you configure. Go to your clan website → **Discord Bot** page, expand any feature, and paste a webhook URL from that channel.",
+    "",
+    "**⚔️ War**",
+    "`/warremind` • `/warcheck` • `/warday` • `/scout`",
+    "Battle reminders, war kickoff, hourly progress, pre-war checklist, war results, perfect war alert, missed battles, opponent scouting",
+    "",
+    "**👥 Members**",
+    "New member welcome, `/donations`, member count alert, `/inactive`, kick recommendations",
+    "",
+    "**🏆 Rankings**",
+    "Rank promotions, `/streaks`, weekly fame leaderboard, `/bounty`, donation leaderboard",
+    "",
+    "**🎉 Fun**",
+    "`/quote` — random One Piece quote posted to this channel",
+    "",
+    "**How to create a webhook:**",
+    "Right-click a channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy URL → paste into the website",
+    "",
+    "Set up at: your clan website → Discord Bot page (password protected)",
+  ].join("\n"));
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
