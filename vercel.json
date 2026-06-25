@@ -2,16 +2,16 @@
   "crons": [
     { "path": "/api/war/snapshot",         "schedule": "0 12 * * 1,5" },
     { "path": "/api/members/snapshot",     "schedule": "0 12 * * 1,5" },
-    { "path": "/api/discord/remind",       "schedule": "0 12 * * *"   },
-    { "path": "/api/discord/remind",       "schedule": "0 18 * * *"   },
-    { "path": "/api/discord/remind",       "schedule": "0 23 * * *"   },
-    { "path": "/api/discord/leaderboard",  "schedule": "0 9  * * 1"   },
-    { "path": "/api/discord/donations",    "schedule": "0 10 * * 0"   },
-    { "path": "/api/discord/quote",        "schedule": "0 8  * * *"   },
-    { "path": "/api/discord/member-count", "schedule": "0 9  * * *"   },
-    { "path": "/api/discord/inactive",     "schedule": "0 10 * * 1"   },
-    { "path": "/api/discord/kick-alert",   "schedule": "0 11 * * 1"   },
+    { "path": "/api/discord/remind",       "schedule": "0 12 * * *" },
+    { "path": "/api/discord/remind",       "schedule": "0 18 * * *" },
+    { "path": "/api/discord/remind",       "schedule": "0 23 * * *" },
+    { "path": "/api/discord/leaderboard",  "schedule": "0 9 * * 1" },
+    { "path": "/api/discord/donations",    "schedule": "0 10 * * 0" },
+    { "path": "/api/discord/quote",        "schedule": "0 8 * * *" },
+    { "path": "/api/discord/member-count", "schedule": "0 9 * * *" },
+    { "path": "/api/discord/inactive",     "schedule": "0 10 * * 1" },
+    { "path": "/api/discord/kick-alert",   "schedule": "0 11 * * 1" },
     { "path": "/api/discord/streaks",      "schedule": "0 13 * * 1,5" },
-    { "path": "/api/discord/bounty",       "schedule": "0 12 * * 1"   }
+    { "path": "/api/discord/bounty",       "schedule": "0 12 * * 1" }
   ]
 }
