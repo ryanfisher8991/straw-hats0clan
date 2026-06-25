@@ -7,6 +7,18 @@
     {
       "path": "/api/members/snapshot",
       "schedule": "0 12 * * 1,5"
+    },
+    {
+      "path": "/api/discord/remind",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/discord/remind",
+      "schedule": "0 18 * * *"
+    },
+    {
+      "path": "/api/discord/remind",
+      "schedule": "0 23 * * *"
     }
   ]
 }
