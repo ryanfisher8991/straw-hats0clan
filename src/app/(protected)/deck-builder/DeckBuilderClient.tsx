@@ -33,14 +33,46 @@ function toGameLevel(apiLevel: number, rarity?: string): number {
 
 // ── Scoring ──────────────────────────────────────────────────────────────────
 
-function scoreSet(set: DeckSet, cardMap: Map<string, PlayerCard>): number {
+interface ScoredSet {
+  set: DeckSet;
+  avgScore: number;   // average (card_level / 16) across all 32 cards, 0–1
+  maxCovered: number; // how many of the player's level-16 cards appear in this set
+}
+
+function scoreSet(
+  set: DeckSet,
+  cardMap: Map<string, PlayerCard>,
+  playerMaxNames: Set<string>,
+): ScoredSet {
   const allCards = set.decks.flatMap(d => d.cards);
   let total = 0;
+  let maxCovered = 0;
   for (const card of allCards) {
-    const pc = cardMap.get(normalizeCardName(card.name));
-    if (pc) total += toGameLevel(pc.level, pc.rarity) / GAME_MAX_LEVEL;
+    const name = normalizeCardName(card.name);
+    const pc = cardMap.get(name);
+    if (pc) {
+      total += toGameLevel(pc.level, pc.rarity) / GAME_MAX_LEVEL;
+      if (playerMaxNames.has(name)) maxCovered++;
+    }
   }
-  return total / allCards.length;
+  return { set, avgScore: total / allCards.length, maxCovered };
+}
+
+// Sort: primary = maxCovered DESC (use as many of the player's best cards as possible),
+//       secondary = avgScore DESC (highest average level as tiebreaker).
+function rankSets(cardMap: Map<string, PlayerCard>): ScoredSet[] {
+  const playerMaxNames = new Set(
+    [...cardMap.entries()]
+      .filter(([, pc]) => toGameLevel(pc.level, pc.rarity) >= GAME_MAX_LEVEL)
+      .map(([name]) => name),
+  );
+  return WAR_DECK_SETS
+    .map(set => scoreSet(set, cardMap, playerMaxNames))
+    .sort((a, b) =>
+      b.maxCovered !== a.maxCovered
+        ? b.maxCovered - a.maxCovered
+        : b.avgScore - a.avgScore,
+    );
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -256,11 +288,7 @@ export default function DeckBuilderClient({ members }: Props) {
     }
   }, [selectedTag, cardMap]);
 
-  const scoredSets = cardMap
-    ? [...WAR_DECK_SETS]
-        .map(set => ({ set, score: scoreSet(set, cardMap) }))
-        .sort((a, b) => b.score - a.score)
-    : null;
+  const scoredSets = cardMap ? rankSets(cardMap) : null;
 
   const activeScored = scoredSets?.[activeSetIdx];
 
@@ -364,7 +392,7 @@ export default function DeckBuilderClient({ members }: Props) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {scoredSets.slice(0, 6).map((scored, i) => {
-                  const fit = fitBadge(scored.score);
+                  const fit = fitBadge(scored.avgScore);
                   const isActive = activeSetIdx === i;
                   return (
                     <button
@@ -392,7 +420,7 @@ export default function DeckBuilderClient({ members }: Props) {
                         >
                           {fit.label}
                         </span>
-                        <span className="font-display text-xs text-text-muted">{Math.round(scored.score * 100)}%</span>
+                        <span className="font-display text-xs text-text-muted">{Math.round(scored.avgScore * 100)}%</span>
                       </div>
                     </button>
                   );
