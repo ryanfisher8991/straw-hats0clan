@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Skull, BarChart2, Layers } from "lucide-react";
+import { LayoutDashboard, Swords, Users, Skull, BarChart2, Layers, Bot } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",    label: "Dashboard",    mobileLabel: "Home",     icon: LayoutDashboard },
@@ -91,6 +91,27 @@ function SidebarContent({ pathname }: { pathname: string }) {
             </Link>
           );
         })}
+
+        {/* Desktop-only: Discord Bot setup */}
+        <div className="mt-3 mx-3 border-t border-navy-500/50" />
+        {(() => {
+          const active = pathname === "/discord";
+          return (
+            <Link
+              href="/discord"
+              className={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-r-lg text-sm mt-1 ${
+                active ? "nav-item-active" : "text-text-muted"
+              }`}
+            >
+              <Bot
+                size={17}
+                strokeWidth={active ? 2 : 1.5}
+                className={active ? "text-gold-400" : ""}
+              />
+              <span className="font-heading tracking-wide text-[0.8rem]">Discord Bot</span>
+            </Link>
+          );
+        })()}
       </nav>
 
     </div>
