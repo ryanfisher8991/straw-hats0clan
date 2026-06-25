@@ -1,5 +1,11 @@
-import { config } from "dotenv";
-config({ path: ".env.local" });
+import { readFileSync } from "fs";
+try {
+  const env = readFileSync(".env.local", "utf8");
+  for (const line of env.split("\n")) {
+    const eq = line.indexOf("=");
+    if (eq > 0) process.env[line.slice(0, eq).trim()] = line.slice(eq + 1).trim();
+  }
+} catch { /* no .env.local, rely on process.env */ }
 
 const { DISCORD_BOT_TOKEN, DISCORD_APPLICATION_ID, DISCORD_GUILD_ID } = process.env;
 
