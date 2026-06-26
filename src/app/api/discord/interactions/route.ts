@@ -60,8 +60,15 @@ export async function POST(req: Request) {
     };
 
     if (command && PROXY[command]) {
-      fetch(`${origin}${PROXY[command]}`, { method: "POST", headers }).catch(console.error);
-      return discordReply(`⏳ Running **/${command}**… check the channel in a moment.`);
+      try {
+        const res = await fetch(`${origin}${PROXY[command]}`, { method: "POST", headers });
+        const data = await res.json();
+        if (data.skipped) return discordReply(`ℹ️ ${data.reason}`);
+        if (data.error) return discordReply(`❌ **/${command}** failed: ${data.error}`);
+        return discordReply(`✅ **/${command}** posted to its channel!`);
+      } catch (err) {
+        return discordReply(`❌ **/${command}** failed: ${String(err)}`);
+      }
     }
   }
 
@@ -134,14 +141,11 @@ async function handleWarRemind() {
     });
     const data = await res.json();
 
-    if (data.skipped) {
-      return discordReply(`ℹ️ Reminder skipped: ${data.reason}`);
-    }
-    if (data.allDone) {
-      return discordReply("✅ Everyone has finished their battles — sent a completion message!");
-    }
+    if (data.skipped) return discordReply(`ℹ️ Reminder skipped: ${data.reason}`);
+    if (data.error)   return discordReply(`❌ Reminder failed: ${data.error}`);
+    if (data.allDone) return discordReply("✅ Everyone has finished their battles — sent a completion message!");
     return discordReply(
-      `📣 Reminder sent! ${data.needBattle} member${data.needBattle === 1 ? "" : "s"} still need to battle (${data.totalBattlesLeft} battles left).`
+      `📣 Reminder sent! **${data.needBattle}** member${data.needBattle === 1 ? "" : "s"} still need to battle (${data.totalBattlesLeft} battles left).`
     );
   } catch (err) {
     return discordReply(`❌ Failed to send reminder: ${String(err)}`);
