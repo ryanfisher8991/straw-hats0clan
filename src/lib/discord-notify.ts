@@ -480,21 +480,21 @@ export async function notifyMemberCount(count: number, threshold: number) {
 // ── Streak Milestone ──────────────────────────────────────────────────────────
 
 const STREAK_FLAVOR: Record<number, string> = {
-  5:  "5 wars in a row with full battles. Zoro is starting to notice you.",
-  10: "10 consecutive wars. You fight like a Straw Hat first mate.",
-  20: "20 wars. Absolute dedication. The crew would follow you anywhere.",
+  5:  "5 wars in a row maxing all 16 decks and earning 1,800+ fame. Zoro is starting to notice you.",
+  10: "10 consecutive elite wars. You fight like a Straw Hat first mate.",
+  20: "20 wars of pure dominance. Absolute dedication. The crew would follow you anywhere.",
 };
 
 export async function notifyStreakMilestone(player: { name: string; tag: string }, streak: number) {
   const webhook = await getWebhook("streaks");
   if (!webhook) return;
 
-  const flavor = STREAK_FLAVOR[streak] ?? `${streak} consecutive wars with all 4 decks used.`;
+  const flavor = STREAK_FLAVOR[streak] ?? `${streak} consecutive wars with all 16 decks used and 1,800+ fame.`;
 
   await postEmbed(webhook, {
     embeds: [{
-      title: `🔥 ${streak}-War Battle Streak!`,
-      description: `**${player.name}** has used all 4 decks in **${streak} wars in a row**!\n\n*${flavor}*`,
+      title: `🔥 ${streak}-War Elite Streak!`,
+      description: `**${player.name}** has maxed all 16 decks and earned 1,800+ fame in **${streak} wars in a row**!\n\n*${flavor}*`,
       color: streak >= 20 ? 0x39FF14 : streak >= 10 ? 0xA78BFA : 0xFF6B00,
       footer: { text: "Straw Hats Clash Royale · Streak Achievement" },
       timestamp: new Date().toISOString(),

@@ -25,10 +25,14 @@ async function handler() {
 
     const { data: stats } = await supabase
       .from("war_member_stats")
-      .select("player_tag, player_name, decks_used, snapshot_id")
+      .select("player_tag, player_name, decks_used, fame, snapshot_id")
       .in("snapshot_id", snapshots.map(s => s.id));
 
     // Build per-member ordered war history
+    // "Strong war" = used all 16 decks AND earned at least 1,800 fame
+    const FAME_MIN = 1800;
+    const DECKS_MIN = 16;
+
     const snapshotOrder = new Map(snapshots.map((s, i) => [s.id, i]));
     const memberWars = new Map<string, { name: string; wars: boolean[] }>();
 
@@ -39,7 +43,7 @@ async function handler() {
       }
       const entry = memberWars.get(stat.player_tag)!;
       const idx = snapshotOrder.get(stat.snapshot_id) ?? 0;
-      entry.wars[idx] = stat.decks_used >= 4;
+      entry.wars[idx] = stat.decks_used >= DECKS_MIN && stat.fame >= FAME_MIN;
     }
 
     const milestones = [5, 10, 20];
