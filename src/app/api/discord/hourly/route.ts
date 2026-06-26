@@ -1,4 +1,5 @@
 import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
+import { isWarDay } from "@/lib/cr-utils";
 import { notifyHourlyWarCheck } from "@/lib/discord-notify";
 
 export async function GET() { return handler(); }
@@ -12,7 +13,7 @@ async function handler() {
     ]);
 
     const state: string = race?.state ?? "";
-    if (state !== "warDay") {
+    if (!isWarDay(state)) {
       return Response.json({ skipped: true, reason: "Not war day" });
     }
 

@@ -7,6 +7,7 @@
  */
 
 import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
+import { isWarDay } from "@/lib/cr-utils";
 
 const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 
@@ -80,7 +81,7 @@ async function handleWarCheck() {
     ]);
 
     const state: string = race?.state ?? "";
-    if (state !== "warDay") {
+    if (!isWarDay(state)) {
       return discordReply(
         `⚔️ No active war day right now. Current state: **${state || "unknown"}**`
       );

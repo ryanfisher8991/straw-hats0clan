@@ -1,4 +1,5 @@
 import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
+import { isWarDay } from "@/lib/cr-utils";
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL!;
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     const state: string = race?.state ?? "";
 
     // Only remind during active war day
-    if (state !== "warDay") {
+    if (!isWarDay(state)) {
       return Response.json({
         skipped: true,
         reason: `War state is "${state}", not warDay`,
