@@ -6,7 +6,7 @@ interface ChannelRow {
   enabled: boolean;
 }
 
-async function getWebhook(feature: string): Promise<string | null> {
+export async function getWebhook(feature: string): Promise<string | null> {
   const { data } = await supabase
     .from("discord_channels")
     .select("webhook_url, enabled")
@@ -18,7 +18,7 @@ async function getWebhook(feature: string): Promise<string | null> {
   return row.webhook_url;
 }
 
-async function postEmbed(webhookUrl: string, payload: object): Promise<boolean> {
+export async function postEmbed(webhookUrl: string, payload: object): Promise<boolean> {
   const res = await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
