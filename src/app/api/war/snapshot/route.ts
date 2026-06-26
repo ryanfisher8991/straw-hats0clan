@@ -5,6 +5,8 @@ import {
   notifyPerfectWar,
   notifyMissedBattles,
   notifyPromotions,
+  notifyInactiveMembers,
+  notifyKickRecommendation,
 } from '@/lib/discord-notify'
 
 const CLAN_TAG = '#QPRQ88YP'
@@ -117,6 +119,53 @@ async function fireWarNotifications(
   // Promotions: compute cumulative fame per member and check for rank-ups
   if (snapshotDate >= POST_BASELINE_CUTOFF) {
     await checkAndNotifyPromotions(participants)
+  }
+
+  // Low fame alert — members below the per-war threshold
+  const { data: fameCfg } = await supabase
+    .from("discord_config").select("value").eq("key", "low_fame_threshold").maybeSingle()
+  const lowFameThreshold = parseInt(fameCfg?.value ?? "850", 10)
+  const lowFame = participants.filter(p => p.fame < lowFameThreshold)
+  if (lowFame.length > 0) {
+    await notifyInactiveMembers(
+      lowFame.map(p => ({ name: p.name, tag: p.tag, donations: 0, recentFame: p.fame })),
+      lowFameThreshold,
+    ).catch(console.error)
+  }
+
+  // Kick recommendation — members with avg fame below threshold over last 5 wars
+  const { data: kickCfg } = await supabase
+    .from("discord_config").select("value").eq("key", "kick_avg_threshold").maybeSingle()
+  const kickThreshold = parseInt(kickCfg?.value ?? "1700", 10)
+
+  const { data: snapshots } = await supabase
+    .from("war_snapshots").select("id").order("snapshotted_at", { ascending: false }).limit(5)
+  if (snapshots && snapshots.length >= 2) {
+    const { data: stats } = await supabase
+      .from("war_member_stats")
+      .select("player_tag, player_name, fame")
+      .in("snapshot_id", snapshots.map(s => s.id))
+      .in("player_tag", participants.map(p => p.tag))
+
+    const memberFames = new Map<string, { name: string; fames: number[] }>()
+    for (const stat of stats ?? []) {
+      if (!memberFames.has(stat.player_tag))
+        memberFames.set(stat.player_tag, { name: stat.player_name, fames: [] })
+      memberFames.get(stat.player_tag)!.fames.push(stat.fame)
+    }
+
+    const kickCandidates = [...memberFames.entries()]
+      .filter(([, v]) => v.fames.length >= 2)
+      .map(([tag, v]) => ({
+        tag, name: v.name, warsChecked: v.fames.length,
+        avgFame: Math.round(v.fames.reduce((s, f) => s + f, 0) / v.fames.length),
+      }))
+      .filter(m => m.avgFame < kickThreshold)
+      .sort((a, b) => a.avgFame - b.avgFame)
+
+    if (kickCandidates.length > 0) {
+      await notifyKickRecommendation(kickCandidates, kickThreshold).catch(console.error)
+    }
   }
 }
 

@@ -15,12 +15,20 @@ async function handler() {
       return Response.json({ error: "No members from CR API" }, { status: 500 });
     }
 
-    // Get fame from the last 2 war snapshots
+    // Load configurable threshold (default 850)
+    const { data: configRow } = await supabase
+      .from("discord_config")
+      .select("value")
+      .eq("key", "low_fame_threshold")
+      .maybeSingle();
+    const threshold = parseInt(configRow?.value ?? "850", 10);
+
+    // Get the most recent war snapshot
     const { data: snapshots } = await supabase
       .from("war_snapshots")
       .select("id")
       .order("snapshotted_at", { ascending: false })
-      .limit(2);
+      .limit(1);
 
     const snapshotIds = (snapshots ?? []).map(s => s.id);
     const tags = members.map(m => m.tag);
@@ -34,16 +42,18 @@ async function handler() {
         .in("player_tag", tags);
 
       for (const row of stats ?? []) {
-        fameByTag.set(row.player_tag, (fameByTag.get(row.player_tag) ?? 0) + row.fame);
+        fameByTag.set(row.player_tag, row.fame);
       }
     }
 
-    const inactive = members.filter(m =>
-      (fameByTag.get(m.tag) ?? 0) === 0 && m.donations < 10
-    );
+    // Flag members who participated in the war but scored below threshold
+    const inactive = members.filter(m => {
+      const fame = fameByTag.get(m.tag);
+      return fame !== undefined && fame < threshold;
+    });
 
     if (inactive.length === 0) {
-      return Response.json({ skipped: true, reason: "No inactive members" });
+      return Response.json({ skipped: true, reason: `No members below ${threshold} fame threshold` });
     }
 
     await notifyInactiveMembers(inactive.map(m => ({
@@ -51,9 +61,9 @@ async function handler() {
       tag: m.tag,
       donations: m.donations,
       recentFame: fameByTag.get(m.tag) ?? 0,
-    })));
+    })), threshold);
 
-    return Response.json({ ok: true, count: inactive.length });
+    return Response.json({ ok: true, count: inactive.length, threshold });
   } catch (err) {
     return Response.json({ error: String(err) }, { status: 500 });
   }

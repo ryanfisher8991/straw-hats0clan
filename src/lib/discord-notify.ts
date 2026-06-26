@@ -436,18 +436,20 @@ export async function notifyDonationLeaderboard(members: Array<{
 
 export async function notifyInactiveMembers(inactive: Array<{
   name: string; tag: string; donations: number; recentFame: number;
-}>) {
+}>, threshold = 850) {
   const webhook = await getWebhook("inactive");
   if (!webhook) return;
 
-  const lines = inactive.map(m =>
-    `💤 **${m.name}** — ${m.recentFame} war fame · ${m.donations} donations`
-  ).join("\n");
+  const lines = inactive
+    .sort((a, b) => a.recentFame - b.recentFame)
+    .map(m =>
+      `💤 **${m.name}** — ${m.recentFame.toLocaleString()} fame (below ${threshold.toLocaleString()}) · ${m.donations} donations`
+    ).join("\n");
 
   await postEmbed(webhook, {
     embeds: [{
-      title: "😴 Inactive Members Alert",
-      description: `These crew members haven't been pulling their weight. Not even Usopp would make these excuses.\n\n${lines}\n\n*Consider a conversation before the next war.*`,
+      title: "😴 Low War Fame Alert",
+      description: `These crew members scored below **${threshold.toLocaleString()} fame** this war. Not even Usopp would make these excuses.\n\n${lines}\n\n*Consider a conversation before the next war.*`,
       color: 0xFBBF24,
       footer: { text: "Straw Hats Clash Royale · Admin Alert" },
       timestamp: new Date().toISOString(),
@@ -552,19 +554,19 @@ export async function notifyBountyBoard(
 // ── Kick Recommendation ───────────────────────────────────────────────────────
 
 export async function notifyKickRecommendation(candidates: Array<{
-  name: string; tag: string; consecutiveZeros: number;
-}>) {
+  name: string; tag: string; avgFame: number; warsChecked: number;
+}>, threshold = 1700) {
   const webhook = await getWebhook("kick_alert");
   if (!webhook) return;
 
   const lines = candidates.map(c =>
-    `⚠️ **${c.name}** \`${c.tag}\` — 0 fame in last ${c.consecutiveZeros} wars`
+    `⚠️ **${c.name}** \`${c.tag}\` — avg **${c.avgFame.toLocaleString()}** fame over ${c.warsChecked} wars`
   ).join("\n");
 
   await postEmbed(webhook, {
     embeds: [{
       title: "🚨 Kick Recommendation — Admin Eyes Only",
-      description: `The following members have contributed **zero fame** in the last 2 or more wars. Even Buggy tries.\n\n${lines}\n\n*Review their profiles and consider a warning or removal before the next war.*`,
+      description: `The following members are averaging below **${threshold.toLocaleString()} fame** per war. Even Buggy tries harder.\n\n${lines}\n\n*Review their profiles on the war analysis page and consider a warning or removal.*`,
       color: 0xEF4444,
       footer: { text: "Straw Hats Clash Royale · Admin Alert · Handle with care" },
       timestamp: new Date().toISOString(),
