@@ -8,6 +8,7 @@ import {
   notifyInactiveMembers,
   notifyKickRecommendation,
 } from '@/lib/discord-notify'
+import { syncMemberRoles } from '@/lib/discord-roles'
 
 const CLAN_TAG = '#QPRQ88YP'
 const POST_BASELINE_CUTOFF = '2026-05-05T00:00:00Z'
@@ -166,6 +167,34 @@ async function fireWarNotifications(
     if (kickCandidates.length > 0) {
       await notifyKickRecommendation(kickCandidates, kickThreshold).catch(console.error)
     }
+  }
+
+  // Sync Discord roles for all registered members (fame tiers may have changed)
+  syncWarRoles(participants).catch(console.error)
+}
+
+async function syncWarRoles(participants: Array<{ tag: string }>) {
+  const { data: registered } = await supabase
+    .from('discord_members')
+    .select('discord_user_id, player_tag, clan_role')
+    .in('player_tag', participants.map(p => p.tag))
+
+  if (!registered?.length) return
+
+  const tags = registered.map(r => r.player_tag)
+  const [baselineRes, statsRes] = await Promise.all([
+    supabase.from('fame_baseline').select('player_tag, baseline_fame').in('player_tag', tags),
+    supabase.from('war_member_stats').select('player_tag, fame').in('player_tag', tags),
+  ])
+
+  const fameMap = new Map<string, number>()
+  for (const r of baselineRes.data ?? []) fameMap.set(r.player_tag, (fameMap.get(r.player_tag) ?? 0) + r.baseline_fame)
+  for (const r of statsRes.data ?? [])    fameMap.set(r.player_tag, (fameMap.get(r.player_tag) ?? 0) + r.fame)
+
+  for (const row of registered) {
+    const totalFame = fameMap.get(row.player_tag) ?? 0
+    await syncMemberRoles(row.discord_user_id, row.clan_role ?? 'member', totalFame).catch(console.error)
+    await new Promise(r => setTimeout(r, 250))
   }
 }
 

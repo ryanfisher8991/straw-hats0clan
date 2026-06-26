@@ -20,11 +20,35 @@ const commands = [
   { name: "warday",    description: "Post the war day kickoff message immediately" },
   { name: "scout",     description: "Scout the current opponent clan and post their stats" },
   { name: "donations", description: "Post this week's donation leaderboard now" },
-  { name: "inactive",  description: "Show members with low war fame and donations" },
+  { name: "inactive",  description: "Show members with low war fame" },
   { name: "streaks",   description: "Post the current battle streak leaderboard" },
   { name: "bounty",    description: "Post the all-time best single-war fame performances" },
   { name: "quote",     description: "Post a random One Piece quote to this channel" },
   { name: "setup",     description: "Show the bot setup guide and list of all available features" },
+  {
+    name: "register",
+    description: "Link your Clash Royale account to your Discord profile and get your clan roles",
+    options: [
+      {
+        name: "tag",
+        description: "Your Clash Royale player tag (e.g. ABC123 — no # needed)",
+        type: 3,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "whois",
+    description: "Look up which Clash Royale account a Discord member has registered",
+    options: [
+      {
+        name: "user",
+        description: "The Discord user to look up",
+        type: 6,
+        required: true,
+      },
+    ],
+  },
 ];
 
 const url = DISCORD_GUILD_ID

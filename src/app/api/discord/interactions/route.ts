@@ -8,6 +8,8 @@
 
 import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
 import { isWarDay } from "@/lib/cr-utils";
+import { supabase } from "@/lib/supabase";
+import { syncMemberRoles, CLAN_ROLE_MAP, FAME_TIERS } from "@/lib/discord-roles";
 
 const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 
@@ -47,6 +49,8 @@ export async function POST(req: Request) {
     if (command === "warcheck")  return handleWarCheck();
     if (command === "warremind") return handleWarRemind();
     if (command === "setup")     return handleSetup();
+    if (command === "register")  return handleRegister(interaction);
+    if (command === "whois")     return handleWhois(interaction);
 
     // Proxy commands to their feature API routes
     const PROXY: Record<string, string> = {
@@ -150,6 +154,113 @@ async function handleWarRemind() {
   } catch (err) {
     return discordReply(`❌ Failed to send reminder: ${String(err)}`);
   }
+}
+
+// ── /register ─────────────────────────────────────────────────────────────────
+
+async function handleRegister(interaction: Record<string, unknown>) {
+  const member = interaction.member as { user: { id: string; username: string } } | undefined;
+  const discordUserId  = member?.user?.id;
+  const discordUsername = member?.user?.username ?? "Unknown";
+
+  if (!discordUserId) return discordReply("❌ Could not read your Discord user ID.");
+
+  const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
+  const rawTag  = options.find(o => o.name === "tag")?.value ?? "";
+  const tag     = "#" + rawTag.replace(/^#/, "").toUpperCase().trim();
+
+  if (!rawTag) return discordReply("❌ Please provide your player tag. Example: `/register ABC123`");
+
+  // Verify tag is in the clan
+  const clanData = await getClanMembers();
+  const clanMember = (clanData?.items ?? []).find(
+    (m: { tag: string }) => m.tag.toUpperCase() === tag.toUpperCase()
+  );
+
+  if (!clanMember) {
+    return discordReply(
+      `❌ **${tag}** is not in the Straw Hats clan. Double-check your tag (no # needed) and try again.`
+    );
+  }
+
+  // Check if this tag is already claimed by a different Discord user
+  const { data: existing } = await supabase
+    .from("discord_members")
+    .select("discord_user_id, discord_username")
+    .eq("player_tag", clanMember.tag)
+    .maybeSingle();
+
+  if (existing && existing.discord_user_id !== discordUserId) {
+    return discordReply(
+      `❌ **${clanMember.name}** is already registered to another Discord account. Ask an admin to sort it out.`
+    );
+  }
+
+  // Save / update the registration
+  const { error } = await supabase.from("discord_members").upsert({
+    discord_user_id:  discordUserId,
+    discord_username: discordUsername,
+    player_tag:       clanMember.tag,
+    player_name:      clanMember.name,
+    clan_role:        clanMember.role ?? "member",
+    updated_at:       new Date().toISOString(),
+  }, { onConflict: "discord_user_id" });
+
+  if (error) return discordReply(`❌ Failed to save registration: ${error.message}`);
+
+  // Assign roles immediately
+  const { data: fameRows } = await supabase
+    .from("war_member_stats")
+    .select("fame")
+    .eq("player_tag", clanMember.tag);
+  const { data: baselineRow } = await supabase
+    .from("fame_baseline")
+    .select("baseline_fame")
+    .eq("player_tag", clanMember.tag)
+    .maybeSingle();
+
+  const totalFame =
+    ((baselineRow as { baseline_fame?: number } | null)?.baseline_fame ?? 0) +
+    (fameRows ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
+
+  const syncResult = await syncMemberRoles(discordUserId, clanMember.role ?? "member", totalFame);
+
+  const fameTier = FAME_TIERS.find(t => totalFame >= t.min);
+  const clanRoleName = CLAN_ROLE_MAP[clanMember.role ?? "member"] ?? "Crew Member";
+
+  if (!syncResult.ok) {
+    return discordReply(
+      `✅ **${clanMember.name}** registered! But role assignment failed: ${syncResult.reason ?? "unknown error"}. Make sure the bot has Manage Roles permission and is above the clan roles in the hierarchy.`
+    );
+  }
+
+  return discordReply([
+    `🏴‍☠️ **${clanMember.name}** has joined the crew manifest!`,
+    ``,
+    `**Clan Rank:** ${clanRoleName}`,
+    `**Fame Tier:** ${fameTier ? fameTier.name : "Unranked"} (${totalFame.toLocaleString()} lifetime fame)`,
+    ``,
+    `Your Discord roles have been updated. Roles sync automatically after every war.`,
+  ].join("\n"));
+}
+
+// ── /whois ─────────────────────────────────────────────────────────────────────
+
+async function handleWhois(interaction: Record<string, unknown>) {
+  const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
+  const targetId = options.find(o => o.name === "user")?.value;
+
+  const { data } = await supabase
+    .from("discord_members")
+    .select("player_name, player_tag, clan_role, discord_username")
+    .eq("discord_user_id", targetId ?? "")
+    .maybeSingle();
+
+  if (!data) return discordReply("❓ That user hasn't registered with `/register` yet.");
+
+  const d = data as { player_name: string; player_tag: string; clan_role: string; discord_username: string };
+  const clanRoleName = CLAN_ROLE_MAP[d.clan_role] ?? "Crew Member";
+  return discordReply(`🏴‍☠️ **${d.discord_username}** is **${d.player_name}** (${d.player_tag}) — ${clanRoleName}`);
 }
 
 // ── /setup ────────────────────────────────────────────────────────────────────
