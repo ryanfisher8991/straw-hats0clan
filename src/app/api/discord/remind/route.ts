@@ -67,7 +67,7 @@ export async function GET(req: Request) {
         const done = p.decksUsedToday;
         const left = battlesLeft(p);
         const bar = "🟩".repeat(done) + "⬛".repeat(left);
-        return `${bar} **${p.name}** — ${done}/4 done (${left} left)`;
+        return `${bar} **${p.name}** — ${done}/4`;
       })
       .join("\n");
 
