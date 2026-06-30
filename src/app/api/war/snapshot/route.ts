@@ -201,7 +201,14 @@ async function syncWarRoles(participants: Array<{ tag: string }>) {
 async function checkAndNotifyPromotions(
   newParticipants: Array<{ tag: string; name: string; fame: number }>
 ) {
-  const tags = newParticipants.map(p => p.tag)
+  // Only process members actually in the clan right now
+  const { getClanMembers } = await import('@/lib/cr-api')
+  const clanData = await getClanMembers()
+  const activeTags = new Set<string>((clanData?.items ?? []).map((m: { tag: string }) => m.tag))
+  const activePart = newParticipants.filter(p => activeTags.has(p.tag))
+  if (!activePart.length) return
+
+  const tags = activePart.map(p => p.tag)
 
   // Get fame baseline
   const { data: baselineRows } = await supabase
@@ -234,7 +241,7 @@ async function checkAndNotifyPromotions(
     }
   }
 
-  const membersWithFame = newParticipants.map(p => ({
+  const membersWithFame = activePart.map(p => ({
     tag: p.tag,
     name: p.name,
     fame: (baselineByTag.get(p.tag) ?? 0) + (historicalByTag.get(p.tag) ?? 0),

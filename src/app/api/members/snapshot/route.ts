@@ -21,7 +21,7 @@ async function handler() {
     const { data: recentTags } = await supabase
       .from('member_snapshots')
       .select('player_tag')
-      .gte('created_at', cutoff)
+      .gte('snapshotted_at', cutoff)
 
     const knownTags = new Set((recentTags ?? []).map(r => r.player_tag))
     const newMembers = members.filter(m => !knownTags.has(m.tag))

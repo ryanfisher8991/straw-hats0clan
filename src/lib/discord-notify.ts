@@ -38,7 +38,7 @@ export async function notifyWarResults(participants: Array<{
   const sorted = [...participants].sort((a, b) => b.fame - a.fame);
   const top3 = sorted.slice(0, 3);
   const totalFame = participants.reduce((s, p) => s + p.fame, 0);
-  const totalMissed = participants.reduce((s, p) => s + Math.max(0, 4 - p.decksUsed), 0);
+  const totalMissed = participants.reduce((s, p) => s + Math.max(0, 16 - p.decksUsed), 0);
   const medals = ["🥇", "🥈", "🥉"];
 
   const podium = top3.map((p, i) =>
@@ -66,7 +66,7 @@ export async function notifyWarResults(participants: Array<{
 export async function notifyPerfectWar(participants: Array<{
   name: string; decksUsed: number;
 }>, totalFame: number) {
-  const allPerfect = participants.every(p => p.decksUsed >= 4);
+  const allPerfect = participants.every(p => p.decksUsed >= 16);
   if (!allPerfect) return;
 
   const webhook = await getWebhook("perfect_war");
@@ -75,7 +75,7 @@ export async function notifyPerfectWar(participants: Array<{
   await postEmbed(webhook, {
     embeds: [{
       title: "🔥 GOMU GOMU NO PERFECT WAR!!",
-      description: `Every single Straw Hat used all 4 decks. Not a single pirate stood down.\n\nThis is the power of the crew that's going to make Luffy King of the Pirates! 🏴‍☠️\n\n**${participants.length}/${participants.length}** pirates fought · **${totalFame.toLocaleString()}** total fame`,
+      description: `Every single Straw Hat used all 16 decks. Not a single pirate stood down.\n\nThis is the power of the crew that's going to make Luffy King of the Pirates! 🏴‍☠️\n\n**${participants.length}/${participants.length}** pirates fought · **${totalFame.toLocaleString()}** total fame`,
       color: 0xFF6B00,
       footer: { text: "Straw Hats Clash Royale · Nami, I want to live!" },
       timestamp: new Date().toISOString(),
@@ -88,7 +88,7 @@ export async function notifyPerfectWar(participants: Array<{
 export async function notifyMissedBattles(participants: Array<{
   name: string; decksUsed: number;
 }>) {
-  const missed = participants.filter(p => p.decksUsed < 4);
+  const missed = participants.filter(p => p.decksUsed < 16);
   if (missed.length === 0) return;
 
   const webhook = await getWebhook("missed_battles");
@@ -97,8 +97,8 @@ export async function notifyMissedBattles(participants: Array<{
   const lines = missed
     .sort((a, b) => a.decksUsed - b.decksUsed)
     .map(p => {
-      const m = 4 - p.decksUsed;
-      return `💤 **${p.name}** — sat out ${m} battle${m === 1 ? "" : "s"}`;
+      const m = 16 - p.decksUsed;
+      return `💤 **${p.name}** — ${p.decksUsed}/16 decks used (${m} missed)`;
     })
     .join("\n");
 
