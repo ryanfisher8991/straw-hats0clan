@@ -105,7 +105,7 @@ export default async function DashboardPage() {
   const currentMemberTags = new Set<string>(members.map((m: ClanMember) => m.tag));
   const mostImproved = await getMostImproved(currentMemberTags);
 
-  // War Hero: top fame participant in current race
+  // War Hero: top fame participant in current race, fall back to last snapshot
   const raceParticipants: { tag: string; name: string; fame: number }[] =
     race?.clan?.tag === CLAN_TAG
       ? race.clan.participants ?? []
@@ -115,9 +115,33 @@ export default async function DashboardPage() {
     .filter((p) => p.fame > 0)
     .sort((a, b) => b.fame - a.fame)[0] ?? null;
 
-  const warHero = topFameParticipant
+  let warHero: { name: string; fame: number } | null = topFameParticipant
     ? { name: topFameParticipant.name, fame: topFameParticipant.fame }
     : null;
+
+  // No live fame yet (training phase / war just reset) — use last snapshot
+  if (!warHero) {
+    const { data: lastSnapshot } = await supabase
+      .from("war_snapshots")
+      .select("id")
+      .order("snapshotted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastSnapshot) {
+      const { data: topStat } = await supabase
+        .from("war_member_stats")
+        .select("player_name, fame")
+        .eq("snapshot_id", lastSnapshot.id)
+        .order("fame", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (topStat && topStat.fame > 0) {
+        warHero = { name: topStat.player_name, fame: topStat.fame };
+      }
+    }
+  }
 
   // Top Donor: highest donations this week
   const sortedByDonation = [...members].sort(
