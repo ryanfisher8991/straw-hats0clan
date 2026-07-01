@@ -2,9 +2,9 @@
   "crons": [
     { "path": "/api/war/snapshot",         "schedule": "0 12 * * 1,5" },
     { "path": "/api/members/snapshot",     "schedule": "0 12 * * 1,5" },
-    { "path": "/api/discord/remind",       "schedule": "0 12 * * *" },
-    { "path": "/api/discord/remind",       "schedule": "0 18 * * *" },
-    { "path": "/api/discord/remind",       "schedule": "0 23 * * *" },
+    { "path": "/api/discord/remind",       "schedule": "0 12 * * 0,4,5,6" },
+    { "path": "/api/discord/remind",       "schedule": "0 18 * * 0,4,5,6" },
+    { "path": "/api/discord/remind",       "schedule": "0 23 * * 0,4,5,6" },
     { "path": "/api/discord/leaderboard",  "schedule": "0 9 * * 1" },
     { "path": "/api/discord/donations",    "schedule": "0 10 * * 0" },
     { "path": "/api/discord/quote",        "schedule": "0 8 * * *" },
