@@ -96,10 +96,7 @@ export async function notifyMissedBattles(participants: Array<{
 
   const lines = missed
     .sort((a, b) => a.decksUsed - b.decksUsed)
-    .map(p => {
-      const m = 16 - p.decksUsed;
-      return `💤 **${p.name}** — ${p.decksUsed}/16 decks used (${m} missed)`;
-    })
+    .map(p => `💤 **${p.name}** — ${p.decksUsed}/16`)
     .join("\n");
 
   await postEmbed(webhook, {
