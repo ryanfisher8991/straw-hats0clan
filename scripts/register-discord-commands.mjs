@@ -49,6 +49,16 @@ const commands = [
       },
     ],
   },
+  {
+    name: "admin-preview-resync",
+    description: "[Admin] Preview the one-time role cleanup without changing anything",
+    default_member_permissions: "268435456", // MANAGE_ROLES
+  },
+  {
+    name: "admin-apply-resync",
+    description: "[Admin] Apply the one-time role cleanup — strips ad-hoc roles, sets Unverified/rank roles",
+    default_member_permissions: "268435456", // MANAGE_ROLES
+  },
 ];
 
 const url = DISCORD_GUILD_ID

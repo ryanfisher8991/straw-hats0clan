@@ -74,12 +74,18 @@ async function syncDiscordRoles(members: Array<{ tag: string; role?: string }>) 
   for (const r of statsRes.data ?? [])    fameMap.set(r.player_tag, (fameMap.get(r.player_tag) ?? 0) + r.fame)
 
   for (const row of registered) {
+    const inClan    = clanRoleByTag.has(row.player_tag)
     const clanRole  = clanRoleByTag.get(row.player_tag) ?? 'member'
     const totalFame = fameMap.get(row.player_tag) ?? 0
-    await supabase.from('discord_members')
-      .update({ clan_role: clanRole, updated_at: new Date().toISOString() })
-      .eq('discord_user_id', row.discord_user_id)
-    await syncMemberRoles(row.discord_user_id, clanRole, totalFame)
+
+    // Only overwrite the stored clan_role while they're actually in the clan —
+    // leave it alone while Out of Clan so a rejoin restores the last-known rank.
+    if (inClan) {
+      await supabase.from('discord_members')
+        .update({ clan_role: clanRole, updated_at: new Date().toISOString() })
+        .eq('discord_user_id', row.discord_user_id)
+    }
+    await syncMemberRoles(row.discord_user_id, clanRole, totalFame, inClan)
     await new Promise(r => setTimeout(r, 250))
   }
 }

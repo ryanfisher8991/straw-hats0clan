@@ -548,6 +548,35 @@ export async function notifyBountyBoard(
   });
 }
 
+// ── Server Join Welcome (verification gate) ───────────────────────────────────
+
+const JOIN_WELCOME_LINES = [
+  "The Log Pose has pointed you here for a reason. Welcome aboard! 🧭",
+  "Every great pirate crew starts with one person saying yes. That's you. 🏴‍☠️",
+  "Luffy didn't ask questions when he recruited you. Neither do we. Set sail! ⛵",
+  "Sanji's already cooking something to celebrate. Don't waste it. 🍖",
+];
+
+export async function notifyDiscordJoin(discordUsername: string) {
+  const webhook = await getWebhook("welcome_gate");
+  if (!webhook) return;
+
+  const flavor = JOIN_WELCOME_LINES[Math.floor(Math.random() * JOIN_WELCOME_LINES.length)];
+
+  await postEmbed(webhook, {
+    embeds: [{
+      title: "🏴‍☠️ A New Pirate Has Boarded!",
+      description: `Welcome, **${discordUsername}**!\n\n*${flavor}*\n\nYou're currently **Unverified** and can only see this channel. Run \`/register <your player tag>\` to link your Clash Royale account, get your crew roles, and unlock the rest of the ship.`,
+      color: 0x34D399,
+      fields: [
+        { name: "🗺️ Clan Tag", value: "#QPRQ88YP", inline: true },
+      ],
+      footer: { text: "Straw Hats Clash Royale · The sea is ours!" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
 // ── Kick Recommendation ───────────────────────────────────────────────────────
 
 export async function notifyKickRecommendation(candidates: Array<{

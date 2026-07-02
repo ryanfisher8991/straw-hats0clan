@@ -3,10 +3,13 @@ import { supabase } from "@/lib/supabase";
 const GUILD_ID  = process.env.DISCORD_GUILD_ID!;
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
 
-// One Piece themed role names — must match exactly what's created in Discord
+// Must match exactly what's created in Discord. "Leader" is intentionally
+// NOT bot-managed — the bot's own role sits below Leader in the hierarchy
+// and can't assign/strip it, and leadership rarely changes anyway. It's
+// treated as a protected, manually-managed role (see isProtectedRole below).
 export const CLAN_ROLE_MAP: Record<string, string> = {
-  leader:    "Captain",
-  coLeader:  "First Mate",
+  leader:    "Leader",
+  coLeader:  "Co-Leader",
   elder:     "Elder",
   member:    "Crew Member",
 };
@@ -20,12 +23,21 @@ export const FAME_TIERS = [
   { name: "Copper",        min:  2000 },
 ];
 
-const ALL_MANAGED_ROLE_NAMES = [
-  "Captain", "First Mate", "Elder", "Crew Member",
+export const OUT_OF_CLAN_ROLE_NAME = "Out of Clan";
+
+// "Leader" deliberately excluded — see CLAN_ROLE_MAP comment above
+export const ALL_MANAGED_ROLE_NAMES = [
+  "Co-Leader", "Elder", "Crew Member",
   "Hashira", "Special Grade", "Diamond", "Gold", "Silver", "Copper",
+  "Unverified", "Verified", OUT_OF_CLAN_ROLE_NAME,
 ];
 
-async function discordApi(path: string, options: RequestInit = {}) {
+// Roles the mass-migration/resync tooling must never strip
+export function isProtectedRole(role: { name: string; managed: boolean }): boolean {
+  return role.managed || role.name === "Admin" || role.name === "Leader";
+}
+
+export async function discordApi(path: string, options: RequestInit = {}) {
   const res = await fetch(`https://discord.com/api/v10${path}`, {
     ...options,
     headers: {
@@ -38,12 +50,51 @@ async function discordApi(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+export interface GuildRole { id: string; name: string; managed: boolean }
+
+// Returns all roles in the guild (full objects, for protected-role checks)
+export async function getGuildRoles(): Promise<GuildRole[]> {
+  const roles = await discordApi(`/guilds/${GUILD_ID}/roles`);
+  return roles ?? [];
+}
+
 // Returns a name → id map for all roles in the guild
 async function getGuildRoleMap(): Promise<Record<string, string>> {
-  const roles = await discordApi(`/guilds/${GUILD_ID}/roles`);
+  const roles = await getGuildRoles();
   const map: Record<string, string> = {};
-  for (const r of roles ?? []) map[r.name] = r.id;
+  for (const r of roles) map[r.name] = r.id;
   return map;
+}
+
+// Fetches every member in the guild (paginated)
+export async function getAllGuildMembers(): Promise<Array<{
+  user: { id: string; username: string; bot?: boolean };
+  roles: string[];
+  nick?: string | null;
+}>> {
+  const members: Array<{ user: { id: string; username: string; bot?: boolean }; roles: string[]; nick?: string | null }> = [];
+  let after = "0";
+  for (;;) {
+    const batch = await discordApi(`/guilds/${GUILD_ID}/members?limit=1000&after=${after}`);
+    if (!Array.isArray(batch) || batch.length === 0) break;
+    members.push(...batch);
+    if (batch.length < 1000) break;
+    after = batch[batch.length - 1].user.id;
+  }
+  return members;
+}
+
+// Strips every role from a member except ones whose id is in keepRoleIds
+export async function stripAllRolesExceptProtected(
+  discordUserId: string,
+  currentRoleIds: string[],
+  keepRoleIds: Set<string>,
+): Promise<void> {
+  const newRoles = currentRoleIds.filter(id => keepRoleIds.has(id));
+  await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ roles: newRoles }),
+  });
 }
 
 // Gets total fame for a player tag (baseline + all war stats)
@@ -57,11 +108,15 @@ async function getTotalFame(playerTag: string): Promise<number> {
   return baseline + warFame;
 }
 
-// Sync a single member's Discord roles based on their CR clan role + fame
+// Sync a single member's Discord roles based on their CR clan role + fame.
+// inClan=false means they're a registered member who's no longer in the clan
+// roster — they get Out of Clan only; rejoining (inClan=true again) naturally
+// restores their rank/fame/Verified roles on the next sync.
 export async function syncMemberRoles(
   discordUserId: string,
   clanRole: string,
   totalFame: number,
+  inClan: boolean = true,
 ): Promise<{ ok: boolean; reason?: string }> {
   const guildRoles = await getGuildRoleMap();
   const member     = await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`);
@@ -80,17 +135,29 @@ export async function syncMemberRoles(
   // Non-managed roles stay untouched
   const keepRoles = currentRoleIds.filter(id => !managedIds.has(id));
 
-  // Target clan role
-  const clanRoleName = CLAN_ROLE_MAP[clanRole] ?? "Crew Member";
-  const clanRoleId   = guildRoles[clanRoleName];
-
-  // Target fame tier
-  const fameTier   = FAME_TIERS.find(t => totalFame >= t.min);
-  const fameRoleId = fameTier ? guildRoles[fameTier.name] : null;
-
   const newRoles = [...keepRoles];
-  if (clanRoleId)  newRoles.push(clanRoleId);
-  if (fameRoleId)  newRoles.push(fameRoleId);
+
+  if (!inClan) {
+    const outOfClanId = guildRoles[OUT_OF_CLAN_ROLE_NAME];
+    if (outOfClanId) newRoles.push(outOfClanId);
+  } else {
+    // Target clan role — only assign it if it's actually bot-managed (Leader
+    // is deliberately excluded; leave whatever the member already has as-is)
+    const clanRoleName = CLAN_ROLE_MAP[clanRole] ?? "Crew Member";
+    const clanRoleId   = ALL_MANAGED_ROLE_NAMES.includes(clanRoleName) ? guildRoles[clanRoleName] : null;
+
+    // Target fame tier
+    const fameTier   = FAME_TIERS.find(t => totalFame >= t.min);
+    const fameRoleId = fameTier ? guildRoles[fameTier.name] : null;
+
+    // Registering always grants Verified (and implicitly drops Unverified,
+    // since it's managed but never re-added below)
+    const verifiedRoleId = guildRoles["Verified"];
+
+    if (clanRoleId)     newRoles.push(clanRoleId);
+    if (fameRoleId)      newRoles.push(fameRoleId);
+    if (verifiedRoleId)  newRoles.push(verifiedRoleId);
+  }
 
   await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`, {
     method: "PATCH",

@@ -100,6 +100,14 @@ const CATEGORIES = [
         slash: null,
       },
       {
+        key: "welcome_gate",
+        label: "Discord Join Welcome (Verification Gate)",
+        trigger: "Every ~2 minutes — fires when someone new joins the Discord server",
+        description: "Detects new Discord joins (not clan joins) and posts a welcome message telling them to run /register. New joiners are automatically given the Unverified role and restricted until they do. Point this at your #welcome channel.",
+        example: "🏴‍☠️ A New Pirate Has Boarded!\nWelcome, NewMember!\n*The Log Pose has pointed you here for a reason.*\nYou're currently Unverified — run /register <your player tag> to unlock the rest of the ship.",
+        slash: null,
+      },
+      {
         key: "donations",
         label: "Donation Leaderboard",
         trigger: "Every Sunday at 10:00 UTC",
@@ -205,13 +213,19 @@ const SLASH_COMMANDS = [
   { cmd: "/bounty",    desc: "Posts the all-time best single-war fame performances" },
   { cmd: "/quote",     desc: "Posts a random One Piece quote to the channel" },
   { cmd: "/setup",     desc: "Shows a setup guide for the Discord bot with all available features" },
+  { cmd: "/register",  desc: "Links a member's Clash Royale account, assigns their roles, and sets their nickname" },
+  { cmd: "/whois",     desc: "Looks up which Clash Royale account a Discord member has registered" },
+  { cmd: "/admin-preview-resync", desc: "[Admin] Preview the one-time role cleanup without changing anything" },
+  { cmd: "/admin-apply-resync",   desc: "[Admin] Apply the one-time role cleanup" },
 ];
 
 // ── OAuth2 invite URL ─────────────────────────────────────────────────────────
 
 function buildInviteUrl(appId: string, appUrl: string) {
   const redirectUri = encodeURIComponent(`${appUrl}/api/discord/callback`);
-  return `https://discord.com/api/oauth2/authorize?client_id=${appId}&permissions=19456&scope=bot%20applications.commands&redirect_uri=${redirectUri}&response_type=code`;
+  // 402672640 = view/send/embed/history + Manage Nicknames + Manage Roles
+  // (needed for /register's role sync and nickname sync)
+  return `https://discord.com/api/oauth2/authorize?client_id=${appId}&permissions=402672640&scope=bot%20applications.commands&redirect_uri=${redirectUri}&response_type=code`;
 }
 
 // ── Password Gate ─────────────────────────────────────────────────────────────

@@ -6,12 +6,18 @@
  *   https://<your-vercel-domain>/api/discord/interactions
  */
 
+import { after } from "next/server";
 import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
 import { isWarDay } from "@/lib/cr-utils";
 import { supabase } from "@/lib/supabase";
-import { syncMemberRoles, CLAN_ROLE_MAP, FAME_TIERS } from "@/lib/discord-roles";
+import {
+  syncMemberRoles, CLAN_ROLE_MAP, FAME_TIERS, ALL_MANAGED_ROLE_NAMES, OUT_OF_CLAN_ROLE_NAME,
+  discordApi, getGuildRoles, getAllGuildMembers, stripAllRolesExceptProtected, isProtectedRole,
+} from "@/lib/discord-roles";
 
 const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
+const GUILD_ID   = process.env.DISCORD_GUILD_ID!;
+const APP_ID     = process.env.DISCORD_APPLICATION_ID!;
 
 // Discord interaction types
 const PING = 1;
@@ -51,6 +57,8 @@ export async function POST(req: Request) {
     if (command === "setup")     return handleSetup();
     if (command === "register")  return handleRegister(interaction);
     if (command === "whois")     return handleWhois(interaction);
+    if (command === "admin-preview-resync") return handleAdminPreviewResync(interaction);
+    if (command === "admin-apply-resync")   return handleAdminApplyResync(interaction);
 
     // Proxy commands to their feature API routes
     const PROXY: Record<string, string> = {
@@ -225,6 +233,17 @@ async function handleRegister(interaction: Record<string, unknown>) {
 
   const syncResult = await syncMemberRoles(discordUserId, clanMember.role ?? "member", totalFame);
 
+  // Best-effort nickname sync — Discord refuses to rename the server owner,
+  // so a failure here must not fail the whole registration.
+  try {
+    await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ nick: clanMember.name.slice(0, 32) }),
+    });
+  } catch (err) {
+    console.warn(`Nickname update failed for ${discordUserId}:`, err);
+  }
+
   const fameTier = FAME_TIERS.find(t => totalFame >= t.min);
   const clanRoleName = CLAN_ROLE_MAP[clanMember.role ?? "member"] ?? "Crew Member";
 
@@ -261,6 +280,189 @@ async function handleWhois(interaction: Record<string, unknown>) {
   const d = data as { player_name: string; player_tag: string; clan_role: string; discord_username: string };
   const clanRoleName = CLAN_ROLE_MAP[d.clan_role] ?? "Crew Member";
   return discordReply(`🏴‍☠️ **${d.discord_username}** is **${d.player_name}** (${d.player_tag}) — ${clanRoleName}`);
+}
+
+// ── Shared resync planning ──────────────────────────────────────────────────────
+
+interface ResyncPlan {
+  toSync: Array<{ id: string; label: string }>;
+  toOutOfClan: Array<{ id: string; label: string }>;
+  toUnverify: Array<{ id: string; label: string }>;
+  alreadyClean: number;
+}
+
+async function planResync(): Promise<ResyncPlan> {
+  const [members, guildRoles, registeredRes, clanData] = await Promise.all([
+    getAllGuildMembers(),
+    getGuildRoles(),
+    supabase.from("discord_members").select("discord_user_id, player_tag"),
+    getClanMembers(),
+  ]);
+
+  const inClanTags = new Set<string>((clanData?.items ?? []).map((m: { tag: string }) => m.tag));
+  const registeredByDiscordId = new Map(
+    (registeredRes.data ?? []).map((r: { discord_user_id: string; player_tag: string }) => [r.discord_user_id, r.player_tag])
+  );
+  const protectedIds = new Set(guildRoles.filter(isProtectedRole).map(r => r.id));
+  const unverifiedId = guildRoles.find(r => r.name === "Unverified")?.id;
+
+  const plan: ResyncPlan = { toSync: [], toOutOfClan: [], toUnverify: [], alreadyClean: 0 };
+
+  for (const member of members) {
+    if (member.user.bot) continue;
+    const label = member.nick || member.user.username;
+
+    const playerTag = registeredByDiscordId.get(member.user.id);
+    if (playerTag) {
+      if (inClanTags.has(playerTag)) {
+        plan.toSync.push({ id: member.user.id, label });
+      } else {
+        plan.toOutOfClan.push({ id: member.user.id, label });
+      }
+      continue;
+    }
+
+    // Roles that aren't protected and aren't the Unverified gate role itself —
+    // if any exist, this member needs to be stripped down to Unverified.
+    const hasExtraRoles = member.roles.some(id => !protectedIds.has(id) && id !== unverifiedId);
+    const alreadyUnverified = unverifiedId ? member.roles.includes(unverifiedId) : false;
+
+    if (hasExtraRoles || !alreadyUnverified) {
+      plan.toUnverify.push({ id: member.user.id, label });
+    } else {
+      plan.alreadyClean++;
+    }
+  }
+
+  return plan;
+}
+
+function hasManageRoles(interaction: Record<string, unknown>): boolean {
+  const member = interaction.member as { permissions?: string } | undefined;
+  const perms = BigInt(member?.permissions ?? "0");
+  const ADMINISTRATOR = BigInt(1) << BigInt(3);
+  const MANAGE_ROLES  = BigInt(1) << BigInt(28);
+  return (perms & ADMINISTRATOR) !== BigInt(0) || (perms & MANAGE_ROLES) !== BigInt(0);
+}
+
+// ── /admin-preview-resync ────────────────────────────────────────────────────────
+
+async function handleAdminPreviewResync(interaction: Record<string, unknown>) {
+  if (!hasManageRoles(interaction)) {
+    return discordReply("❌ You need Manage Roles permission to run this.");
+  }
+  try {
+    const plan = await planResync();
+    const sample = (arr: ResyncPlan["toSync"]) => arr.slice(0, 15).map(m => m.label).join(", ") || "none";
+
+    return discordReply([
+      `🔍 **Resync Preview** — nothing has been changed yet.`,
+      ``,
+      `**${plan.toSync.length}** registered + in-clan members will be re-synced to their rank/fame roles + Verified:`,
+      sample(plan.toSync),
+      ``,
+      `**${plan.toOutOfClan.length}** registered members who've left the clan will be set to Out of Clan:`,
+      sample(plan.toOutOfClan),
+      ``,
+      `**${plan.toUnverify.length}** unregistered members will be stripped and set to Unverified:`,
+      sample(plan.toUnverify),
+      ``,
+      `**${plan.alreadyClean}** members already clean (Unverified, nothing else to do).`,
+      ``,
+      `Run \`/admin-apply-resync\` to apply this.`,
+    ].join("\n"));
+  } catch (err) {
+    return discordReply(`❌ Preview failed: ${String(err)}`);
+  }
+}
+
+// ── /admin-apply-resync ──────────────────────────────────────────────────────────
+
+function handleAdminApplyResync(interaction: Record<string, unknown>) {
+  if (!hasManageRoles(interaction)) {
+    return discordReply("❌ You need Manage Roles permission to run this.");
+  }
+
+  const token = interaction.token as string;
+
+  after(async () => {
+    try {
+      const plan = await planResync();
+      const guildRoles = await getGuildRoles();
+      const roleByName = new Map(guildRoles.map(r => [r.name, r.id]));
+      const protectedIds = new Set(guildRoles.filter(isProtectedRole).map(r => r.id));
+      const unverifiedId = roleByName.get("Unverified");
+
+      let synced = 0;
+      let outOfClan = 0;
+      let unverified = 0;
+
+      // Registered + in-clan members → strip to protected-only, then run the normal sync
+      for (const m of plan.toSync) {
+        const member = await discordApi(`/guilds/${GUILD_ID}/members/${m.id}`);
+        if (member?.roles) {
+          await stripAllRolesExceptProtected(m.id, member.roles, protectedIds);
+        }
+        const { data: row } = await supabase
+          .from("discord_members")
+          .select("player_tag, clan_role")
+          .eq("discord_user_id", m.id)
+          .maybeSingle();
+        if (row) {
+          const [baselineRes, statsRes] = await Promise.all([
+            supabase.from("fame_baseline").select("baseline_fame").eq("player_tag", row.player_tag).maybeSingle(),
+            supabase.from("war_member_stats").select("fame").eq("player_tag", row.player_tag),
+          ]);
+          const totalFame =
+            ((baselineRes.data as { baseline_fame?: number } | null)?.baseline_fame ?? 0) +
+            (statsRes.data ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
+          const result = await syncMemberRoles(m.id, row.clan_role ?? "member", totalFame, true);
+          if (result.ok) synced++;
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Registered but no longer in the clan → strip to protected-only, assign Out of Clan
+      for (const m of plan.toOutOfClan) {
+        const member = await discordApi(`/guilds/${GUILD_ID}/members/${m.id}`);
+        if (member?.roles) {
+          await stripAllRolesExceptProtected(m.id, member.roles, protectedIds);
+        }
+        const result = await syncMemberRoles(m.id, "member", 0, false);
+        if (result.ok) outOfClan++;
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      // Unregistered members → strip everything non-protected, assign Unverified
+      for (const m of plan.toUnverify) {
+        const member = await discordApi(`/guilds/${GUILD_ID}/members/${m.id}`);
+        if (member?.roles) {
+          const stripped = member.roles.filter((id: string) => protectedIds.has(id));
+          const newRoles = unverifiedId ? [...stripped, unverifiedId] : stripped;
+          await discordApi(`/guilds/${GUILD_ID}/members/${m.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ roles: newRoles }),
+          });
+          unverified++;
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      await discordApi(`/webhooks/${APP_ID}/${token}/messages/@original`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          content: `✅ **Resync complete** — ${synced} synced to their roles, ${outOfClan} set to Out of Clan, ${unverified} unregistered member(s) set to Unverified.`,
+        }),
+      });
+    } catch (err) {
+      await discordApi(`/webhooks/${APP_ID}/${token}/messages/@original`, {
+        method: "PATCH",
+        body: JSON.stringify({ content: `❌ Resync failed partway through: ${String(err)}` }),
+      }).catch(() => {});
+    }
+  });
+
+  return Response.json({ type: DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE });
 }
 
 // ── /setup ────────────────────────────────────────────────────────────────────

@@ -70,6 +70,13 @@ create table if not exists fame_baseline (
   unique(player_name)
 );
 
+-- Discord Seen Members: tracks who the gatekeeper cron has already
+-- welcomed/gated, so it doesn't re-process the same join every run
+create table if not exists discord_seen_members (
+  discord_user_id text primary key,
+  first_seen_at timestamptz default now()
+);
+
 -- Indexes for common queries
 create index if not exists idx_war_member_stats_snapshot on war_member_stats(snapshot_id);
 create index if not exists idx_war_member_stats_player on war_member_stats(player_tag);
