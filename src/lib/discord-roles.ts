@@ -161,8 +161,14 @@ export async function syncMemberRoles(
   let missingRoleWarning: string | undefined;
 
   if (!inClan) {
-    const outOfClanId = guildRoles[OUT_OF_CLAN_ROLE_NAME];
-    if (outOfClanId) newRoles.push(outOfClanId);
+    // Left/kicked from the clan — back to Unverified (loses access again)
+    // plus Out of Clan (visible marker of why). Rejoining the clan drops
+    // both automatically the next time this runs with inClan=true, since
+    // they're managed roles that only get re-added when targeted.
+    const outOfClanId  = guildRoles[OUT_OF_CLAN_ROLE_NAME];
+    const unverifiedId = guildRoles["Unverified"];
+    if (outOfClanId)  newRoles.push(outOfClanId);
+    if (unverifiedId) newRoles.push(unverifiedId);
   } else {
     // Target clan role — only assign it if it's actually bot-managed (Leader
     // is deliberately excluded; leave whatever the member already has as-is)
