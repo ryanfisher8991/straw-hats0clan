@@ -24,7 +24,7 @@ const COMMANDS = [
     name: "register",
     description: "Link your Clash Royale account to your Discord profile and get your clan roles",
     options: [
-      { name: "tag", description: "Your Clash Royale player tag (e.g. ABC123 — no # needed)", type: 3, required: true },
+      { name: "tag", description: "Your Clash Royale player tag — paste it as-is, e.g. #ABC123 or ABC123", type: 3, required: true },
     ],
   },
   {

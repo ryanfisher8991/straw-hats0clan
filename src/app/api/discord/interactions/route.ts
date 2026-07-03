@@ -191,9 +191,9 @@ async function handleRegister(interaction: Record<string, unknown>) {
 
   const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
   const rawTag  = options.find(o => o.name === "tag")?.value ?? "";
-  const tag     = "#" + rawTag.replace(/^#/, "").toUpperCase().trim();
+  const tag     = "#" + rawTag.trim().replace(/^#/, "").toUpperCase();
 
-  if (!rawTag) return discordReply("❌ Please provide your player tag. Example: `/register ABC123`");
+  if (!rawTag) return discordReply("❌ Please provide your player tag. Example: `/register #ABC123`");
 
   // Verify tag is in the clan
   const clanData = await getClanMembers();
@@ -203,7 +203,7 @@ async function handleRegister(interaction: Record<string, unknown>) {
 
   if (!clanMember) {
     return discordReply(
-      `❌ **${tag}** is not in the Straw Hats clan. Double-check your tag (no # needed) and try again.`
+      `❌ **${tag}** is not in the Straw Hats clan. Double-check your tag and try again.`
     );
   }
 

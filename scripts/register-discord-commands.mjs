@@ -31,7 +31,7 @@ const commands = [
     options: [
       {
         name: "tag",
-        description: "Your Clash Royale player tag (e.g. ABC123 — no # needed)",
+        description: "Your Clash Royale player tag — paste it as-is, e.g. #ABC123 or ABC123",
         type: 3,
         required: true,
       },
