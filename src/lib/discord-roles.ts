@@ -158,6 +158,7 @@ export async function syncMemberRoles(
   const keepRoles = currentRoleIds.filter(id => !managedIds.has(id));
 
   const newRoles = [...keepRoles];
+  let missingRoleWarning: string | undefined;
 
   if (!inClan) {
     const outOfClanId = guildRoles[OUT_OF_CLAN_ROLE_NAME];
@@ -166,11 +167,18 @@ export async function syncMemberRoles(
     // Target clan role — only assign it if it's actually bot-managed (Leader
     // is deliberately excluded; leave whatever the member already has as-is)
     const clanRoleName = CLAN_ROLE_MAP[clanRole] ?? "Crew Member";
-    const clanRoleId   = ALL_MANAGED_ROLE_NAMES.includes(clanRoleName) ? guildRoles[clanRoleName] : null;
+    const isManagedRank = ALL_MANAGED_ROLE_NAMES.includes(clanRoleName);
+    const clanRoleId    = isManagedRank ? guildRoles[clanRoleName] : null;
+    if (isManagedRank && !clanRoleId) {
+      missingRoleWarning = `Role "${clanRoleName}" doesn't exist in the server (check exact name/spelling)`;
+    }
 
     // Target fame tier
     const fameTier   = FAME_TIERS.find(t => totalFame >= t.min);
     const fameRoleId = fameTier ? guildRoles[fameTier.name] : null;
+    if (fameTier && !fameRoleId) {
+      missingRoleWarning = `Role "${fameTier.name}" doesn't exist in the server (check exact name/spelling)`;
+    }
 
     // Registering always grants Verified (and implicitly drops Unverified,
     // since it's managed but never re-added below)
@@ -181,10 +189,18 @@ export async function syncMemberRoles(
     if (verifiedRoleId)  newRoles.push(verifiedRoleId);
   }
 
-  await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`, {
+  const patchResult = await discordApi(`/guilds/${GUILD_ID}/members/${discordUserId}`, {
     method: "PATCH",
     body: JSON.stringify({ roles: newRoles }),
   });
+
+  if (patchResult?.code) {
+    return { ok: false, reason: `Discord rejected the role update: ${patchResult.message ?? JSON.stringify(patchResult)}` };
+  }
+
+  if (missingRoleWarning) {
+    return { ok: false, reason: missingRoleWarning };
+  }
 
   return { ok: true };
 }
