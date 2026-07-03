@@ -75,6 +75,8 @@ export async function POST(req: Request) {
     if (command === "whois")     return handleWhois(interaction);
     if (command === "admin-preview-resync") return handleAdminPreviewResync(interaction);
     if (command === "admin-apply-resync")   return handleAdminApplyResync(interaction);
+    if (command === "admin-register")       return handleAdminRegister(interaction);
+    if (command === "admin-list-members")   return handleAdminListMembers(interaction);
 
     // Proxy commands to their feature API routes
     const PROXY: Record<string, string> = {
@@ -182,18 +184,16 @@ async function handleWarRemind() {
 
 // ── /register ─────────────────────────────────────────────────────────────────
 
-async function handleRegister(interaction: Record<string, unknown>) {
-  const member = interaction.member as { user: { id: string; username: string } } | undefined;
-  const discordUserId  = member?.user?.id;
-  const discordUsername = member?.user?.username ?? "Unknown";
+// Shared by /register (self) and /admin-register (targeting someone else)
+async function registerMember(
+  discordUserId: string,
+  discordUsername: string,
+  rawTag: string,
+  isSelf: boolean,
+): Promise<string> {
+  const tag = "#" + rawTag.trim().replace(/^#/, "").toUpperCase();
 
-  if (!discordUserId) return discordReply("❌ Could not read your Discord user ID.");
-
-  const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
-  const rawTag  = options.find(o => o.name === "tag")?.value ?? "";
-  const tag     = "#" + rawTag.trim().replace(/^#/, "").toUpperCase();
-
-  if (!rawTag) return discordReply("❌ Please provide your player tag. Example: `/register #ABC123`");
+  if (!rawTag) return "❌ Please provide a player tag. Example: `#ABC123`";
 
   // Verify tag is in the clan
   const clanData = await getClanMembers();
@@ -202,9 +202,7 @@ async function handleRegister(interaction: Record<string, unknown>) {
   );
 
   if (!clanMember) {
-    return discordReply(
-      `❌ **${tag}** is not in the Straw Hats clan. Double-check your tag and try again.`
-    );
+    return `❌ **${tag}** is not in the Straw Hats clan. Double-check the tag and try again.`;
   }
 
   // Check if this tag is already claimed by a different Discord user
@@ -215,9 +213,7 @@ async function handleRegister(interaction: Record<string, unknown>) {
     .maybeSingle();
 
   if (existing && existing.discord_user_id !== discordUserId) {
-    return discordReply(
-      `❌ **${clanMember.name}** is already registered to another Discord account. Ask an admin to sort it out.`
-    );
+    return `❌ **${clanMember.name}** is already registered to another Discord account (${existing.discord_username}). Unregister that one first if this is a mistake.`;
   }
 
   // Save / update the registration
@@ -230,7 +226,7 @@ async function handleRegister(interaction: Record<string, unknown>) {
     updated_at:       new Date().toISOString(),
   }, { onConflict: "discord_user_id" });
 
-  if (error) return discordReply(`❌ Failed to save registration: ${error.message}`);
+  if (error) return `❌ Failed to save registration: ${error.message}`;
 
   // Assign roles immediately
   const { data: fameRows } = await supabase
@@ -262,21 +258,53 @@ async function handleRegister(interaction: Record<string, unknown>) {
 
   const fameTier = FAME_TIERS.find(t => totalFame >= t.min);
   const clanRoleName = CLAN_ROLE_MAP[clanMember.role ?? "member"] ?? "Crew Member";
+  const possessive = isSelf ? "Your" : `<@${discordUserId}>'s`;
 
   if (!syncResult.ok) {
-    return discordReply(
-      `✅ **${clanMember.name}** registered! But role assignment failed: ${syncResult.reason ?? "unknown error"}. Make sure the bot has Manage Roles permission and is above the clan roles in the hierarchy.`
-    );
+    return `✅ **${clanMember.name}** registered! But role assignment failed: ${syncResult.reason ?? "unknown error"}. Make sure the bot has Manage Roles permission and is above the clan roles in the hierarchy.`;
   }
 
-  return discordReply([
+  return [
     `🏴‍☠️ **${clanMember.name}** has joined the crew manifest!`,
     ``,
     `**Clan Rank:** ${clanRoleName}`,
     `**Fame Tier:** ${fameTier ? fameTier.name : "Unranked"} (${totalFame.toLocaleString()} lifetime fame)`,
     ``,
-    `Your Discord roles have been updated. Roles sync automatically after every war.`,
-  ].join("\n"));
+    `${possessive} Discord roles have been updated. Roles sync automatically after every war.`,
+  ].join("\n");
+}
+
+async function handleRegister(interaction: Record<string, unknown>) {
+  const member = interaction.member as { user: { id: string; username: string } } | undefined;
+  const discordUserId  = member?.user?.id;
+  const discordUsername = member?.user?.username ?? "Unknown";
+
+  if (!discordUserId) return discordReply("❌ Could not read your Discord user ID.");
+
+  const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
+  const rawTag  = options.find(o => o.name === "tag")?.value ?? "";
+
+  return discordReply(await registerMember(discordUserId, discordUsername, rawTag, true));
+}
+
+// ── /admin-register ───────────────────────────────────────────────────────────
+
+async function handleAdminRegister(interaction: Record<string, unknown>) {
+  if (!hasManageRoles(interaction)) {
+    return discordReply("❌ You need Manage Roles permission to run this.");
+  }
+
+  const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
+  const targetId = options.find(o => o.name === "user")?.value;
+  const rawTag   = options.find(o => o.name === "tag")?.value ?? "";
+
+  if (!targetId) return discordReply("❌ Please specify a Discord user.");
+
+  const resolvedUsers = (interaction.data as { resolved?: { users?: Record<string, { username: string }> } })?.resolved?.users;
+  const discordUsername = resolvedUsers?.[targetId]?.username ?? "Unknown";
+
+  const result = await registerMember(targetId, discordUsername, rawTag, false);
+  return discordReply(`*(registered by admin)*\n${result}`);
 }
 
 // ── /whois ─────────────────────────────────────────────────────────────────────
@@ -296,6 +324,45 @@ async function handleWhois(interaction: Record<string, unknown>) {
   const d = data as { player_name: string; player_tag: string; clan_role: string; discord_username: string };
   const clanRoleName = CLAN_ROLE_MAP[d.clan_role] ?? "Crew Member";
   return discordReply(`🏴‍☠️ **${d.discord_username}** is **${d.player_name}** (${d.player_tag}) — ${clanRoleName}`);
+}
+
+// ── /admin-list-members ──────────────────────────────────────────────────────────
+
+async function handleAdminListMembers(interaction: Record<string, unknown>) {
+  if (!hasManageRoles(interaction)) {
+    return discordReply("❌ You need Manage Roles permission to run this.");
+  }
+
+  const { data, error } = await supabase
+    .from("discord_members")
+    .select("discord_username, player_name, player_tag, clan_role")
+    .order("clan_role", { ascending: true });
+
+  if (error) return discordReply(`❌ Failed to load registrations: ${error.message}`);
+  if (!data || data.length === 0) return discordReply("No one has registered yet.");
+
+  const rows = data as Array<{ discord_username: string; player_name: string; player_tag: string; clan_role: string }>;
+  const lines = rows.map(r =>
+    `**${r.player_name}** \`${r.player_tag}\` — ${CLAN_ROLE_MAP[r.clan_role] ?? "Crew Member"} — @${r.discord_username}`
+  );
+
+  // Embed descriptions cap at 4096 chars — plenty for a full roster, but
+  // truncate defensively in case the clan gets huge
+  let description = lines.join("\n");
+  if (description.length > 3900) {
+    description = description.slice(0, 3900) + `\n… and ${rows.length} total registered (truncated)`;
+  }
+
+  return Response.json({
+    type: CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      embeds: [{
+        title: `📋 Registered Members (${rows.length})`,
+        description,
+        color: 0xF8D978,
+      }],
+    },
+  });
 }
 
 // ── Shared resync planning ──────────────────────────────────────────────────────

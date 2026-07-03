@@ -59,6 +59,30 @@ const commands = [
     description: "[Admin] Apply the one-time role cleanup — strips ad-hoc roles, sets Unverified/rank roles",
     default_member_permissions: "268435456", // MANAGE_ROLES
   },
+  {
+    name: "admin-register",
+    description: "[Admin] Register another member's Clash Royale account on their behalf",
+    default_member_permissions: "268435456", // MANAGE_ROLES
+    options: [
+      {
+        name: "user",
+        description: "The Discord user to register",
+        type: 6,
+        required: true,
+      },
+      {
+        name: "tag",
+        description: "Their Clash Royale player tag — e.g. #ABC123 or ABC123",
+        type: 3,
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "admin-list-members",
+    description: "[Admin] List every registered member and their player tag",
+    default_member_permissions: "268435456", // MANAGE_ROLES
+  },
 ];
 
 const url = DISCORD_GUILD_ID
