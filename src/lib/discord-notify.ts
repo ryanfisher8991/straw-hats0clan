@@ -113,7 +113,15 @@ export async function notifyMissedBattles(participants: Array<{
 // ── Rank Promotions ───────────────────────────────────────────────────────────
 
 const WAR_RANKS = [
-  { name: "Hashira",       min: 60000, emoji: "🟢", color: 0x39FF14,
+  { name: "Clash Master",  min: 1000000, emoji: "👑", color: 0xFFFFFF,
+    flavor: "There is no rank above this. You are the Clash Master." },
+  { name: "Yonko",         min: 496100, emoji: "🌊", color: 0xEF4444,
+    flavor: "One of the Four Emperors. The seas themselves answer to you now." },
+  { name: "Kage",          min: 244400, emoji: "🍃", color: 0x374151,
+    flavor: "A shadow that leads. Your will alone commands the crew." },
+  { name: "Super Saiyan",  min: 120400, emoji: "⚡", color: 0xFDE047,
+    flavor: "Power beyond limits. Your aura alone breaks the battlefield." },
+  { name: "Hashira",       min: 59300, emoji: "🟢", color: 0x39FF14,
     flavor: "You've reached the pinnacle. Zoro himself would acknowledge your strength." },
   { name: "Special Grade", min: 29200, emoji: "🟣", color: 0xA78BFA,
     flavor: "A power rivaling the Yonko. The Grand Line trembles at your name." },

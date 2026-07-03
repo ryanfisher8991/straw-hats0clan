@@ -14,13 +14,19 @@ export const CLAN_ROLE_MAP: Record<string, string> = {
   member:    "Crew Member",
 };
 
+// Matches the site's War Rank Tiers (same thresholds used for promotion
+// notifications in discord-notify.ts)
 export const FAME_TIERS = [
-  { name: "Hashira",       min: 80000 },
-  { name: "Special Grade", min: 40000 },
-  { name: "Diamond",       min: 20000 },
-  { name: "Gold",          min: 10000 },
-  { name: "Silver",        min:  5000 },
-  { name: "Copper",        min:  2000 },
+  { name: "Clash Master",  min: 1000000 },
+  { name: "Yonko",         min:  496100 },
+  { name: "Kage",          min:  244400 },
+  { name: "Super Saiyan",  min:  120400 },
+  { name: "Hashira",       min:   59300 },
+  { name: "Special Grade", min:   29200 },
+  { name: "Diamond",       min:   14400 },
+  { name: "Gold",          min:    7100 },
+  { name: "Silver",        min:    3500 },
+  { name: "Copper",        min:       0 },
 ];
 
 export const OUT_OF_CLAN_ROLE_NAME = "Out of Clan";
@@ -28,6 +34,7 @@ export const OUT_OF_CLAN_ROLE_NAME = "Out of Clan";
 // "Leader" deliberately excluded — see CLAN_ROLE_MAP comment above
 export const ALL_MANAGED_ROLE_NAMES = [
   "Co-Leader", "Elder", "Crew Member",
+  "Clash Master", "Yonko", "Kage", "Super Saiyan",
   "Hashira", "Special Grade", "Diamond", "Gold", "Silver", "Copper",
   "Unverified", "Verified", OUT_OF_CLAN_ROLE_NAME,
 ];
