@@ -2,6 +2,7 @@ import { getClanMembers } from '@/lib/cr-api'
 import { supabase } from '@/lib/supabase'
 import { notifyNewMembers } from '@/lib/discord-notify'
 import { syncMemberRoles, FAME_TIERS } from '@/lib/discord-roles'
+import { getLifetimeFameMap } from '@/lib/fame'
 
 export async function POST() { return handler() }
 export async function GET()  { return handler() }
@@ -54,7 +55,7 @@ async function handler() {
   }
 }
 
-async function syncDiscordRoles(members: Array<{ tag: string; role?: string }>) {
+async function syncDiscordRoles(members: Array<{ tag: string; name: string; role?: string }>) {
   const { data: registered } = await supabase
     .from('discord_members')
     .select('discord_user_id, player_tag')
@@ -62,16 +63,7 @@ async function syncDiscordRoles(members: Array<{ tag: string; role?: string }>) 
   if (!registered?.length) return
 
   const clanRoleByTag = new Map(members.map(m => [m.tag, m.role ?? 'member']))
-
-  const tags = registered.map(r => r.player_tag)
-  const [baselineRes, statsRes] = await Promise.all([
-    supabase.from('fame_baseline').select('player_tag, baseline_fame').in('player_tag', tags),
-    supabase.from('war_member_stats').select('player_tag, fame').in('player_tag', tags),
-  ])
-
-  const fameMap = new Map<string, number>()
-  for (const r of baselineRes.data ?? []) fameMap.set(r.player_tag, (fameMap.get(r.player_tag) ?? 0) + r.baseline_fame)
-  for (const r of statsRes.data ?? [])    fameMap.set(r.player_tag, (fameMap.get(r.player_tag) ?? 0) + r.fame)
+  const fameMap = await getLifetimeFameMap(members.map(m => ({ tag: m.tag, name: m.name })))
 
   for (const row of registered) {
     const inClan    = clanRoleByTag.has(row.player_tag)

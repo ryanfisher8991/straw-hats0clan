@@ -11,9 +11,10 @@ import { getCurrentRiverRace, getClanMembers } from "@/lib/cr-api";
 import { isWarDay } from "@/lib/cr-utils";
 import { supabase } from "@/lib/supabase";
 import {
-  syncMemberRoles, CLAN_ROLE_MAP, FAME_TIERS, ALL_MANAGED_ROLE_NAMES, OUT_OF_CLAN_ROLE_NAME,
+  syncMemberRoles, CLAN_ROLE_MAP, FAME_TIERS,
   discordApi, getGuildRoles, getAllGuildMembers, stripAllRolesExceptProtected, isProtectedRole,
 } from "@/lib/discord-roles";
+import { getLifetimeFame } from "@/lib/fame";
 
 const PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const GUILD_ID   = process.env.DISCORD_GUILD_ID!;
@@ -228,20 +229,9 @@ async function registerMember(
 
   if (error) return `❌ Failed to save registration: ${error.message}`;
 
-  // Assign roles immediately
-  const { data: fameRows } = await supabase
-    .from("war_member_stats")
-    .select("fame")
-    .eq("player_tag", clanMember.tag);
-  const { data: baselineRow } = await supabase
-    .from("fame_baseline")
-    .select("baseline_fame")
-    .eq("player_tag", clanMember.tag)
-    .maybeSingle();
-
-  const totalFame =
-    ((baselineRow as { baseline_fame?: number } | null)?.baseline_fame ?? 0) +
-    (fameRows ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
+  // Assign roles immediately — same lifetime-fame calc as the Members page
+  // (baseline + only post-cutoff war fame, with name-fallback baseline match)
+  const totalFame = await getLifetimeFame(clanMember.tag, clanMember.name);
 
   const syncResult = await syncMemberRoles(discordUserId, clanMember.role ?? "member", totalFame);
 
@@ -516,13 +506,7 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
           .eq("discord_user_id", m.id)
           .maybeSingle();
         if (row) {
-          const [baselineRes, statsRes] = await Promise.all([
-            supabase.from("fame_baseline").select("baseline_fame").eq("player_tag", row.player_tag).maybeSingle(),
-            supabase.from("war_member_stats").select("fame").eq("player_tag", row.player_tag),
-          ]);
-          const totalFame =
-            ((baselineRes.data as { baseline_fame?: number } | null)?.baseline_fame ?? 0) +
-            (statsRes.data ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
+          const totalFame = await getLifetimeFame(row.player_tag, row.player_name ?? row.player_tag);
           const result = await syncMemberRoles(m.id, row.clan_role ?? "member", totalFame, true);
           if (result.ok) synced++;
           else failures.push({ label: m.label, reason: result.reason ?? "unknown error" });
