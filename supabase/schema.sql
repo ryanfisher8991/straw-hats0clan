@@ -77,6 +77,43 @@ create table if not exists discord_seen_members (
   first_seen_at timestamptz default now()
 );
 
+-- Discord Members: links a Discord account to a Clash Royale account,
+-- set by /register
+create table if not exists discord_members (
+  discord_user_id text primary key,
+  discord_username text,
+  player_tag text not null,
+  player_name text,
+  clan_role text default 'member',
+  updated_at timestamptz default now(),
+  unique(player_tag)
+);
+
+-- Discord Config: generic key/value settings for bot features
+-- (e.g. member_count_threshold, low_fame_threshold, kick_avg_threshold)
+create table if not exists discord_config (
+  key text primary key,
+  value text,
+  updated_at timestamptz default now()
+);
+
+-- Discord Channels: per-feature webhook URLs, set on the /discord config page
+create table if not exists discord_channels (
+  feature text primary key,
+  webhook_url text,
+  enabled boolean default true,
+  updated_at timestamptz default now()
+);
+
+-- Discord Promotions Sent: tracks which fame-rank promotion messages have
+-- already been posted, so they don't repeat every time fame is recomputed
+create table if not exists discord_promotions_sent (
+  player_tag text not null,
+  rank_name text not null,
+  sent_at timestamptz default now(),
+  primary key (player_tag, rank_name)
+);
+
 -- Indexes for common queries
 create index if not exists idx_war_member_stats_snapshot on war_member_stats(snapshot_id);
 create index if not exists idx_war_member_stats_player on war_member_stats(player_tag);
