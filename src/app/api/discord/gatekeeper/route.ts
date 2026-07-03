@@ -3,14 +3,24 @@ import { getAllGuildMembers, getGuildRoles, discordApi, ALL_MANAGED_ROLE_NAMES }
 import { notifyDiscordJoin } from "@/lib/discord-notify";
 
 const GUILD_ID = process.env.DISCORD_GUILD_ID!;
+const CRON_SECRET = process.env.CRON_SECRET;
 
 // Polls the guild's member list (no gateway/websocket bot exists — this is a
 // serverless-only app) and, for anyone we haven't seen before: assigns
 // Unverified and posts a welcome message telling them to /register.
-export async function GET()  { return handler(); }
-export async function POST() { return handler(); }
+//
+// Triggered by an external scheduler (GitHub Actions), not Vercel's native
+// cron — the Vercel plan in use only allows daily-or-less-frequent crons,
+// and this needs to run every couple minutes to be useful.
+export async function GET(req: Request)  { return handler(req); }
+export async function POST(req: Request) { return handler(req); }
 
-async function handler() {
+async function handler(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const [members, guildRoles, seenRes] = await Promise.all([
       getAllGuildMembers(),

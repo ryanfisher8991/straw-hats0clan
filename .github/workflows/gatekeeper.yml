@@ -1,0 +1,16 @@
+name: Discord Gatekeeper
+
+on:
+  schedule:
+    # GitHub Actions' minimum supported interval is every 5 minutes
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping-gatekeeper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call gatekeeper endpoint
+        run: |
+          curl -sf -X POST "https://www.strawhats.vip/api/discord/gatekeeper" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
