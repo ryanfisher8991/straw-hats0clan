@@ -274,22 +274,42 @@ async function registerMember(
   ].join("\n");
 }
 
-async function handleRegister(interaction: Record<string, unknown>) {
+// Registration involves a CR API lookup + several Supabase calls + Discord
+// role/nickname patches — often too slow for Discord's 3-second interaction
+// window, so this defers immediately and follows up once done.
+function deferAndFollowUp(token: string, work: () => Promise<string>) {
+  after(async () => {
+    let content: string;
+    try {
+      content = await work();
+    } catch (err) {
+      content = `❌ Registration failed: ${String(err)}`;
+    }
+    await discordApi(`/webhooks/${APP_ID}/${token}/messages/@original`, {
+      method: "PATCH",
+      body: JSON.stringify({ content }),
+    }).catch(() => {});
+  });
+  return Response.json({ type: DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE });
+}
+
+function handleRegister(interaction: Record<string, unknown>) {
   const member = interaction.member as { user: { id: string; username: string } } | undefined;
   const discordUserId  = member?.user?.id;
   const discordUsername = member?.user?.username ?? "Unknown";
+  const token = interaction.token as string;
 
   if (!discordUserId) return discordReply("❌ Could not read your Discord user ID.");
 
   const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
   const rawTag  = options.find(o => o.name === "tag")?.value ?? "";
 
-  return discordReply(await registerMember(discordUserId, discordUsername, rawTag, true));
+  return deferAndFollowUp(token, () => registerMember(discordUserId, discordUsername, rawTag, true));
 }
 
 // ── /admin-register ───────────────────────────────────────────────────────────
 
-async function handleAdminRegister(interaction: Record<string, unknown>) {
+function handleAdminRegister(interaction: Record<string, unknown>) {
   if (!hasManageRoles(interaction)) {
     return discordReply("❌ You need Manage Roles permission to run this.");
   }
@@ -297,14 +317,17 @@ async function handleAdminRegister(interaction: Record<string, unknown>) {
   const options = (interaction.data as { options?: Array<{ name: string; value: string }> })?.options ?? [];
   const targetId = options.find(o => o.name === "user")?.value;
   const rawTag   = options.find(o => o.name === "tag")?.value ?? "";
+  const token = interaction.token as string;
 
   if (!targetId) return discordReply("❌ Please specify a Discord user.");
 
   const resolvedUsers = (interaction.data as { resolved?: { users?: Record<string, { username: string }> } })?.resolved?.users;
   const discordUsername = resolvedUsers?.[targetId]?.username ?? "Unknown";
 
-  const result = await registerMember(targetId, discordUsername, rawTag, false);
-  return discordReply(`*(registered by admin)*\n${result}`);
+  return deferAndFollowUp(token, async () => {
+    const result = await registerMember(targetId, discordUsername, rawTag, false);
+    return `*(registered by admin)*\n${result}`;
+  });
 }
 
 // ── /whois ─────────────────────────────────────────────────────────────────────
