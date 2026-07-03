@@ -52,6 +52,22 @@ export async function POST(req: Request) {
     const secret = process.env.CRON_SECRET ?? "";
     const headers = { Authorization: `Bearer ${secret}` };
 
+    // Unverified members can only /register (and check /setup) — everything
+    // else gets redirected instead of run. Discord's own per-command
+    // permission system can't target a custom role like this, so it's
+    // enforced here instead.
+    const ALLOWED_WHILE_UNVERIFIED = new Set(["register", "setup"]);
+    if (command && !ALLOWED_WHILE_UNVERIFIED.has(command)) {
+      const memberRoles: string[] = (interaction.member as { roles?: string[] } | undefined)?.roles ?? [];
+      if (memberRoles.length > 0) {
+        const guildRoles = await getGuildRoles();
+        const unverifiedId = guildRoles.find(r => r.name === "Unverified")?.id;
+        if (unverifiedId && memberRoles.includes(unverifiedId)) {
+          return discordReply("🔒 You need to verify first — run `/register <your player tag>` to unlock the rest of the crew.");
+        }
+      }
+    }
+
     if (command === "warcheck")  return handleWarCheck();
     if (command === "warremind") return handleWarRemind();
     if (command === "setup")     return handleSetup();
