@@ -76,7 +76,10 @@ export async function getAllGuildMembers(): Promise<Array<{
   let after = "0";
   for (;;) {
     const batch = await discordApi(`/guilds/${GUILD_ID}/members?limit=1000&after=${after}`);
-    if (!Array.isArray(batch) || batch.length === 0) break;
+    if (!Array.isArray(batch)) {
+      throw new Error(`Discord API error fetching guild members: ${JSON.stringify(batch)}`);
+    }
+    if (batch.length === 0) break;
     members.push(...batch);
     if (batch.length < 1000) break;
     after = batch[batch.length - 1].user.id;
