@@ -412,6 +412,7 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
       let synced = 0;
       let outOfClan = 0;
       let unverified = 0;
+      const failures: Array<{ label: string; reason: string }> = [];
 
       // Registered + in-clan members → strip to protected-only, then run the normal sync
       for (const m of plan.toSync) {
@@ -434,6 +435,7 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
             (statsRes.data ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
           const result = await syncMemberRoles(m.id, row.clan_role ?? "member", totalFame, true);
           if (result.ok) synced++;
+          else failures.push({ label: m.label, reason: result.reason ?? "unknown error" });
 
           if (row.player_name) {
             try {
@@ -475,10 +477,17 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
         await new Promise(r => setTimeout(r, 300));
       }
 
+      const failureLines = failures.slice(0, 10)
+        .map(f => `⚠️ **${f.label}** — ${f.reason}`)
+        .join("\n");
+
       await discordApi(`/webhooks/${APP_ID}/${token}/messages/@original`, {
         method: "PATCH",
         body: JSON.stringify({
-          content: `✅ **Resync complete** — ${synced} synced to their roles, ${outOfClan} set to Out of Clan, ${unverified} unregistered member(s) set to Unverified.`,
+          content: [
+            `✅ **Resync complete** — ${synced} synced to their roles, ${outOfClan} set to Out of Clan, ${unverified} unregistered member(s) set to Unverified.`,
+            failures.length > 0 ? `\n❌ **${failures.length} failed:**\n${failureLines}` : "",
+          ].join(""),
         }),
       });
     } catch (err) {
