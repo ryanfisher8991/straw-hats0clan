@@ -421,7 +421,7 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
         }
         const { data: row } = await supabase
           .from("discord_members")
-          .select("player_tag, clan_role")
+          .select("player_tag, player_name, clan_role")
           .eq("discord_user_id", m.id)
           .maybeSingle();
         if (row) {
@@ -434,6 +434,17 @@ function handleAdminApplyResync(interaction: Record<string, unknown>) {
             (statsRes.data ?? []).reduce((s: number, r: { fame: number }) => s + r.fame, 0);
           const result = await syncMemberRoles(m.id, row.clan_role ?? "member", totalFame, true);
           if (result.ok) synced++;
+
+          if (row.player_name) {
+            try {
+              await discordApi(`/guilds/${GUILD_ID}/members/${m.id}`, {
+                method: "PATCH",
+                body: JSON.stringify({ nick: row.player_name.slice(0, 32) }),
+              });
+            } catch (err) {
+              console.warn(`Nickname update failed for ${m.id}:`, err);
+            }
+          }
         }
         await new Promise(r => setTimeout(r, 300));
       }

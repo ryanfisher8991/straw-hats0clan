@@ -44,7 +44,11 @@ export function isProtectedRole(role: { name: string; managed: boolean }): boole
   return role.managed || role.name === "Admin" || role.name === "Leader";
 }
 
-export async function discordApi(path: string, options: RequestInit = {}) {
+// Retries on Discord's 429 (rate limit) instead of returning the rate-limit
+// error body as if it were real data — without this, callers like
+// getAllGuildMembers would see a non-array response mid-pagination and
+// either throw or silently under-count depending on when it hit.
+export async function discordApi(path: string, options: RequestInit = {}, retriesLeft = 3): Promise<any> {
   const res = await fetch(`https://discord.com/api/v10${path}`, {
     ...options,
     headers: {
@@ -53,6 +57,14 @@ export async function discordApi(path: string, options: RequestInit = {}) {
       ...(options.headers ?? {}),
     },
   });
+
+  if (res.status === 429 && retriesLeft > 0) {
+    const body = await res.json().catch(() => ({}));
+    const retryAfterMs = Math.ceil((body.retry_after ?? 1) * 1000);
+    await new Promise(r => setTimeout(r, retryAfterMs));
+    return discordApi(path, options, retriesLeft - 1);
+  }
+
   if (res.status === 204) return null;
   return res.json();
 }
