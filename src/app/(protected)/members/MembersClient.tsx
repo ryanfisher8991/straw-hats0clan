@@ -33,8 +33,15 @@ function formatLastSeen(lastSeen: string): string {
   return `${days}d ago`;
 }
 
+// Must match src/lib/discord-roles.ts FAME_TIERS and src/lib/discord-notify.ts
+// WAR_RANKS exactly — three copies of these thresholds exist and they drifted
+// out of sync once already (Hashira was 60000 here vs the correct 59300).
 const WAR_RANKS = [
-  { name: "Hashira",       min: 60000, color: "text-[#39ff14]",  border: "border-[#39ff14]/50", bg: "bg-[#39ff14]/10"  },
+  { name: "Clash Master",  min: 1000000, color: "text-white",      border: "border-white/50",      bg: "bg-white/10"      },
+  { name: "Yonko",         min: 496100,  color: "text-red-400",    border: "border-red-500/50",    bg: "bg-red-900/20"    },
+  { name: "Kage",          min: 244400,  color: "text-slate-400",  border: "border-slate-500/50",  bg: "bg-slate-800/20"  },
+  { name: "Super Saiyan",  min: 120400,  color: "text-yellow-300", border: "border-yellow-400/50",  bg: "bg-yellow-500/10" },
+  { name: "Hashira",       min: 59300,  color: "text-[#39ff14]",  border: "border-[#39ff14]/50", bg: "bg-[#39ff14]/10"  },
   { name: "Special Grade", min: 29200, color: "text-purple-400", border: "border-purple-500/50", bg: "bg-purple-900/20" },
   { name: "Diamond",       min: 14400, color: "text-cyan-400",   border: "border-cyan-500/50",   bg: "bg-cyan-900/20"   },
   { name: "Gold",          min: 7100,  color: "text-gold-400",   border: "border-gold-700/50",   bg: "bg-gold-700/15"   },

@@ -9,8 +9,13 @@ interface SpotlightData {
   mostImproved: { name: string; delta: number } | null;
 }
 
+// Must match src/lib/discord-roles.ts FAME_TIERS exactly
 const WAR_RANKS = [
-  { name: "Hashira",       min: 60000, color: "#39ff14" },
+  { name: "Clash Master",  min: 1000000, color: "#ffffff" },
+  { name: "Yonko",         min: 496100,  color: "#ef4444" },
+  { name: "Kage",          min: 244400,  color: "#94a3b8" },
+  { name: "Super Saiyan",  min: 120400,  color: "#fde047" },
+  { name: "Hashira",       min: 59300, color: "#39ff14" },
   { name: "Special Grade", min: 29200, color: "#c084fc" },
   { name: "Diamond",       min: 14400, color: "#22d3ee" },
   { name: "Gold",          min: 7100,  color: "#fbbf24" },
