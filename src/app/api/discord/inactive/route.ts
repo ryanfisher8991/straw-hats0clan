@@ -34,22 +34,39 @@ async function handler() {
     const tags = members.map(m => m.tag);
 
     const fameByTag = new Map<string, number>();
+    const decksUsedByTag = new Map<string, number>();
     if (snapshotIds.length > 0) {
       const { data: stats } = await supabase
         .from("war_member_stats")
-        .select("player_tag, fame")
+        .select("player_tag, fame, decks_used")
         .in("snapshot_id", snapshotIds)
         .in("player_tag", tags);
 
       for (const row of stats ?? []) {
         fameByTag.set(row.player_tag, row.fame);
+        decksUsedByTag.set(row.player_tag, row.decks_used);
       }
+    }
+
+    // A member whose only recorded war is this latest one, with 0 decks
+    // used, likely joined the clan too late this week to battle at all —
+    // don't flag them as inactive for it.
+    const { data: allStats } = await supabase
+      .from("war_member_stats")
+      .select("player_tag, snapshot_id")
+      .in("player_tag", tags);
+    const warCountByTag = new Map<string, number>();
+    for (const row of allStats ?? []) {
+      warCountByTag.set(row.player_tag, (warCountByTag.get(row.player_tag) ?? 0) + 1);
     }
 
     // Flag members who participated in the war but scored below threshold
     const inactive = members.filter(m => {
       const fame = fameByTag.get(m.tag);
-      return fame !== undefined && fame < threshold;
+      if (fame === undefined || fame >= threshold) return false;
+      const isFirstWarEver = (warCountByTag.get(m.tag) ?? 0) <= 1;
+      if (isFirstWarEver && decksUsedByTag.get(m.tag) === 0) return false;
+      return true;
     });
 
     if (inactive.length === 0) {

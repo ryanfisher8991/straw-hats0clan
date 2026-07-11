@@ -123,11 +123,28 @@ async function fireWarNotifications(
     await checkAndNotifyPromotions(participants)
   }
 
-  // Low fame alert — members below the per-war threshold
+  // Low fame alert — members below the per-war threshold. Skip anyone whose
+  // low fame is from 0 decks used on their first-ever recorded war — that's
+  // "joined too late this week to battle," not inactivity.
   const { data: fameCfg } = await supabase
     .from("discord_config").select("value").eq("key", "low_fame_threshold").maybeSingle()
   const lowFameThreshold = parseInt(fameCfg?.value ?? "850", 10)
-  const lowFame = participants.filter(p => p.fame < lowFameThreshold)
+
+  const { data: allWarCounts } = await supabase
+    .from("war_member_stats")
+    .select("player_tag")
+    .in("player_tag", participants.map(p => p.tag))
+  const warCountByTag = new Map<string, number>()
+  for (const row of allWarCounts ?? []) {
+    warCountByTag.set(row.player_tag, (warCountByTag.get(row.player_tag) ?? 0) + 1)
+  }
+
+  const lowFame = participants.filter(p => {
+    if (p.fame >= lowFameThreshold) return false
+    const isFirstWarEver = (warCountByTag.get(p.tag) ?? 0) <= 1
+    if (isFirstWarEver && p.decksUsed === 0) return false
+    return true
+  })
   if (lowFame.length > 0) {
     await notifyInactiveMembers(
       lowFame.map(p => ({ name: p.name, tag: p.tag, donations: 0, recentFame: p.fame })),
@@ -141,26 +158,39 @@ async function fireWarNotifications(
   const kickThreshold = parseInt(kickCfg?.value ?? "1700", 10)
 
   const { data: snapshots } = await supabase
-    .from("war_snapshots").select("id").order("snapshotted_at", { ascending: false }).limit(5)
+    .from("war_snapshots").select("id, snapshotted_at").order("snapshotted_at", { ascending: true }).limit(5)
   if (snapshots && snapshots.length >= 2) {
+    const snapshotOrder = new Map(snapshots.map((s, i) => [s.id, i]))
     const { data: stats } = await supabase
       .from("war_member_stats")
-      .select("player_tag, player_name, fame")
+      .select("player_tag, player_name, fame, decks_used, snapshot_id")
       .in("snapshot_id", snapshots.map(s => s.id))
       .in("player_tag", participants.map(p => p.tag))
 
-    const memberFames = new Map<string, { name: string; fames: number[] }>()
+    const memberWars = new Map<string, { name: string; entries: Array<{ fame: number; decksUsed: number; order: number }> }>()
     for (const stat of stats ?? []) {
-      if (!memberFames.has(stat.player_tag))
-        memberFames.set(stat.player_tag, { name: stat.player_name, fames: [] })
-      memberFames.get(stat.player_tag)!.fames.push(stat.fame)
+      if (!memberWars.has(stat.player_tag))
+        memberWars.set(stat.player_tag, { name: stat.player_name, entries: [] })
+      memberWars.get(stat.player_tag)!.entries.push({
+        fame: stat.fame,
+        decksUsed: stat.decks_used,
+        order: snapshotOrder.get(stat.snapshot_id) ?? 0,
+      })
     }
 
-    const kickCandidates = [...memberFames.entries()]
-      .filter(([, v]) => v.fames.length >= 2)
+    // Same "joined too late to battle" exclusion as the low-fame alert above
+    for (const member of memberWars.values()) {
+      member.entries.sort((a, b) => a.order - b.order)
+      if (member.entries[0]?.decksUsed === 0) {
+        member.entries.shift()
+      }
+    }
+
+    const kickCandidates = [...memberWars.entries()]
+      .filter(([, v]) => v.entries.length >= 2)
       .map(([tag, v]) => ({
-        tag, name: v.name, warsChecked: v.fames.length,
-        avgFame: Math.round(v.fames.reduce((s, f) => s + f, 0) / v.fames.length),
+        tag, name: v.name, warsChecked: v.entries.length,
+        avgFame: Math.round(v.entries.reduce((s, e) => s + e.fame, 0) / v.entries.length),
       }))
       .filter(m => m.avgFame < kickThreshold)
       .sort((a, b) => a.avgFame - b.avgFame)

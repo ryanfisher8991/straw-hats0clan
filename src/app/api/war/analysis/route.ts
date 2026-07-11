@@ -8,6 +8,7 @@ export interface WarEntry {
   fame: number
   decksUsed: number
   decksMissed: number
+  excludedFromAverage?: boolean
 }
 
 export interface MemberAnalysis {
@@ -75,10 +76,24 @@ export async function GET() {
         const wars = [...member.wars].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
-        const avgFame = Math.round(wars.reduce((s, w) => s + w.fame, 0) / wars.length)
-        const avgDecksMissed =
-          Math.round((wars.reduce((s, w) => s + w.decksMissed, 0) / wars.length) * 10) / 10
-        return { tag: member.tag, name: member.name, wars, avgFame, avgDecksMissed, warsCount: wars.length }
+
+        // Their earliest recorded war with 0 decks used means they never got
+        // a chance to battle at all that week — most likely joined the clan
+        // too late in the war to participate, not a missed war. Exclude just
+        // that one entry from the averages (still shown in their history).
+        const oldest = wars[wars.length - 1]
+        if (oldest && oldest.decksUsed === 0) {
+          oldest.excludedFromAverage = true
+        }
+
+        const countedWars = wars.filter((w) => !w.excludedFromAverage)
+        const avgFame = countedWars.length
+          ? Math.round(countedWars.reduce((s, w) => s + w.fame, 0) / countedWars.length)
+          : 0
+        const avgDecksMissed = countedWars.length
+          ? Math.round((countedWars.reduce((s, w) => s + w.decksMissed, 0) / countedWars.length) * 10) / 10
+          : 0
+        return { tag: member.tag, name: member.name, wars, avgFame, avgDecksMissed, warsCount: countedWars.length }
       })
       .sort((a, b) => b.avgFame - a.avgFame)
 

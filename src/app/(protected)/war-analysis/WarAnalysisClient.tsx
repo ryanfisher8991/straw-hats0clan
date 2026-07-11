@@ -11,6 +11,7 @@ export interface WarEntry {
   fame: number;
   decksUsed: number;
   decksMissed: number;
+  excludedFromAverage?: boolean;
 }
 
 export interface MemberAnalysis {
@@ -75,14 +76,17 @@ function FameBar({ value, max = 2400 }: { value: number; max?: number }) {
 }
 
 function WarRow({ war }: { war: WarEntry }) {
-  const isFlashing = war.fame < FAME_WAR_THRESHOLD;
+  const isExcluded = war.excludedFromAverage;
+  const isFlashing = !isExcluded && war.fame < FAME_WAR_THRESHOLD;
   const d = new Date(war.date);
   const dateLabel = `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}/${d.getUTCFullYear()}`;
 
   return (
     <div
       className={`grid grid-cols-[6rem_1fr_4rem_5rem] sm:grid-cols-[8rem_1fr_5rem_6rem] items-center gap-2 py-2 px-3 rounded-lg border ${
-        isFlashing
+        isExcluded
+          ? "border-navy-500 opacity-50"
+          : isFlashing
           ? "border-red-clash/40 animate-flash-red-bg"
           : "bg-navy-800 border-navy-500"
       }`}
@@ -91,31 +95,37 @@ function WarRow({ war }: { war: WarEntry }) {
         {dateLabel}
       </span>
 
-      <span
-        className={`font-display text-sm text-right sm:text-left ${
-          isFlashing
-            ? "animate-flash-red"
-            : war.fame >= FAME_WEEKLY_THRESHOLD
-            ? "text-green-clash"
-            : "text-gold-400"
-        }`}
-      >
-        {war.fame.toLocaleString()}
-        {isFlashing && (
-          <AlertTriangle size={10} className="inline ml-1 animate-flash-red" />
-        )}
-      </span>
+      {isExcluded ? (
+        <span className="font-heading text-[0.65rem] tracking-wide text-text-muted italic">
+          Joined too late to battle — excluded from average
+        </span>
+      ) : (
+        <span
+          className={`font-display text-sm text-right sm:text-left ${
+            isFlashing
+              ? "animate-flash-red"
+              : war.fame >= FAME_WEEKLY_THRESHOLD
+              ? "text-green-clash"
+              : "text-gold-400"
+          }`}
+        >
+          {war.fame.toLocaleString()}
+          {isFlashing && (
+            <AlertTriangle size={10} className="inline ml-1 animate-flash-red" />
+          )}
+        </span>
+      )}
 
-      <span className={`font-heading text-xs text-right ${war.decksMissed > 0 ? "text-red-clash" : "text-text-secondary"}`}>
+      <span className={`font-heading text-xs text-right ${!isExcluded && war.decksMissed > 0 ? "text-red-clash" : "text-text-secondary"}`}>
         {war.decksUsed} of 16
       </span>
 
       <span
         className={`font-heading text-xs text-right ${
-          war.decksMissed > 0 ? "text-red-clash" : "text-text-muted"
+          !isExcluded && war.decksMissed > 0 ? "text-red-clash" : "text-text-muted"
         }`}
       >
-        {war.decksMissed > 0 ? `${war.decksMissed} missed` : "—"}
+        {isExcluded ? "—" : war.decksMissed > 0 ? `${war.decksMissed} missed` : "—"}
       </span>
     </div>
   );
