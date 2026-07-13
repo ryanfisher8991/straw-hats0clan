@@ -48,24 +48,13 @@ async function handler() {
       }
     }
 
-    // A member whose only recorded war is this latest one, with 0 decks
-    // used, likely joined the clan too late this week to battle at all —
-    // don't flag them as inactive for it.
-    const { data: allStats } = await supabase
-      .from("war_member_stats")
-      .select("player_tag, snapshot_id")
-      .in("player_tag", tags);
-    const warCountByTag = new Map<string, number>();
-    for (const row of allStats ?? []) {
-      warCountByTag.set(row.player_tag, (warCountByTag.get(row.player_tag) ?? 0) + 1);
-    }
-
-    // Flag members who participated in the war but scored below threshold
+    // 0 decks used means they weren't actually around to battle this week
+    // (joined late, left early, or fully absent but still listed as a
+    // participant) — don't flag them as inactive for it.
     const inactive = members.filter(m => {
       const fame = fameByTag.get(m.tag);
       if (fame === undefined || fame >= threshold) return false;
-      const isFirstWarEver = (warCountByTag.get(m.tag) ?? 0) <= 1;
-      if (isFirstWarEver && decksUsedByTag.get(m.tag) === 0) return false;
+      if (decksUsedByTag.get(m.tag) === 0) return false;
       return true;
     });
 

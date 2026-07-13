@@ -52,14 +52,11 @@ async function handler() {
       });
     }
 
-    // A member's earliest recorded war with 0 decks used means they likely
-    // joined the clan too late that week to battle at all — exclude just
-    // that one entry so it doesn't unfairly drag down their kick average.
+    // A war with 0 decks used means they weren't actually around that week
+    // (joined late, left early, or fully absent but still listed as a
+    // participant) — exclude it so it doesn't unfairly drag down the average.
     for (const member of memberWars.values()) {
-      member.entries.sort((a, b) => a.order - b.order);
-      if (member.entries[0]?.decksUsed === 0) {
-        member.entries.shift();
-      }
+      member.entries = member.entries.filter(e => e.decksUsed > 0);
     }
 
     // Flag members with average fame below threshold (minimum 2 wars of data)

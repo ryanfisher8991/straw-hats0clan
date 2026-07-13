@@ -77,13 +77,12 @@ export async function GET() {
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         )
 
-        // Their earliest recorded war with 0 decks used means they never got
-        // a chance to battle at all that week — most likely joined the clan
-        // too late in the war to participate, not a missed war. Exclude just
-        // that one entry from the averages (still shown in their history).
-        const oldest = wars[wars.length - 1]
-        if (oldest && oldest.decksUsed === 0) {
-          oldest.excludedFromAverage = true
+        // Any war with 0 decks used means they weren't actually around to
+        // battle that week — joined late, left early, or were out of the
+        // clan entirely but still appear in that war's participant list.
+        // Exclude those from the averages (still shown in their history).
+        for (const w of wars) {
+          if (w.decksUsed === 0) w.excludedFromAverage = true
         }
 
         const countedWars = wars.filter((w) => !w.excludedFromAverage)

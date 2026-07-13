@@ -76,16 +76,29 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
         const wars = [...member.wars].sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
-        const avgFame = Math.round(wars.reduce((s, w) => s + w.fame, 0) / wars.length);
-        const avgDecksMissed =
-          Math.round((wars.reduce((s, w) => s + w.decksMissed, 0) / wars.length) * 10) / 10;
+
+        // Any war with 0 decks used means they weren't actually around to
+        // battle that week — joined late, left early, or were out of the
+        // clan entirely but still appear in that war's participant list.
+        // Exclude those from the averages (still shown in their history).
+        for (const w of wars) {
+          if (w.decksUsed === 0) w.excludedFromAverage = true;
+        }
+
+        const countedWars = wars.filter((w) => !w.excludedFromAverage);
+        const avgFame = countedWars.length
+          ? Math.round(countedWars.reduce((s, w) => s + w.fame, 0) / countedWars.length)
+          : 0;
+        const avgDecksMissed = countedWars.length
+          ? Math.round((countedWars.reduce((s, w) => s + w.decksMissed, 0) / countedWars.length) * 10) / 10
+          : 0;
         return {
           tag: member.tag,
           name: member.name,
           wars,
           avgFame,
           avgDecksMissed,
-          warsCount: wars.length,
+          warsCount: countedWars.length,
           clanRank: currentMemberRanks.get(member.tag) ?? null,
         };
       })
