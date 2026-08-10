@@ -114,6 +114,14 @@ create table if not exists discord_promotions_sent (
   primary key (player_tag, rank_name)
 );
 
+-- Recruit Prospects: player tags admins are tracking as potential recruits
+create table if not exists recruit_prospects (
+  id uuid primary key default gen_random_uuid(),
+  player_tag text not null unique,
+  notes text,
+  added_at timestamptz default now()
+);
+
 -- Indexes for common queries
 create index if not exists idx_war_member_stats_snapshot on war_member_stats(snapshot_id);
 create index if not exists idx_war_member_stats_player on war_member_stats(player_tag);

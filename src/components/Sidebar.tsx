@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Swords, Users, Skull, BarChart2, Layers, Bot } from "lucide-react";
+import { LayoutDashboard, Swords, Users, Skull, BarChart2, Layers, Bot, UserPlus } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard",    label: "Dashboard",    mobileLabel: "Home",     icon: LayoutDashboard },
@@ -92,26 +92,30 @@ function SidebarContent({ pathname }: { pathname: string }) {
           );
         })}
 
-        {/* Desktop-only: Discord Bot setup */}
+        {/* Desktop-only: admin tools */}
         <div className="mt-3 mx-3 border-t border-navy-500/50" />
-        {(() => {
-          const active = pathname === "/discord";
+        {[
+          { href: "/recruit", label: "Recruit Watchlist", icon: UserPlus },
+          { href: "/discord", label: "Discord Bot", icon: Bot },
+        ].map(({ href, label, icon: Icon }) => {
+          const active = pathname === href;
           return (
             <Link
-              href="/discord"
+              key={href}
+              href={href}
               className={`nav-item flex items-center gap-3 px-3 py-2.5 rounded-r-lg text-sm mt-1 ${
                 active ? "nav-item-active" : "text-text-muted"
               }`}
             >
-              <Bot
+              <Icon
                 size={17}
                 strokeWidth={active ? 2 : 1.5}
                 className={active ? "text-gold-400" : ""}
               />
-              <span className="font-heading tracking-wide text-[0.8rem]">Discord Bot</span>
+              <span className="font-heading tracking-wide text-[0.8rem]">{label}</span>
             </Link>
           );
-        })()}
+        })}
       </nav>
 
     </div>
