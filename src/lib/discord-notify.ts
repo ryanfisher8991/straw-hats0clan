@@ -534,21 +534,22 @@ export async function notifyPreWarChecklist(hoursLeft: number, memberCount: numb
 // ── Bounty Board ─────────────────────────────────────────────────────────────
 
 export async function notifyBountyBoard(
-  top5: Array<{ name: string; tag: string; fame: number }>,
-  warLabel: string,
+  top5: Array<{ name: string; tag: string; fame: number; warLabel: string }>,
 ) {
   const webhook = await getWebhook("bounty");
   if (!webhook) return;
 
   const medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"];
+  // Each entry gets its own week — the top 5 can span very different weeks,
+  // so a single blanket "top performance from X" line was misleading.
   const lines = top5.map((p, i) =>
-    `${medals[i]} **${p.name}** — ${p.fame.toLocaleString()} fame`
+    `${medals[i]} **${p.name}** — ${p.fame.toLocaleString()} fame${p.warLabel ? ` *(${p.warLabel})*` : ""}`
   ).join("\n");
 
   await postEmbed(webhook, {
     embeds: [{
       title: "🏴‍☠️ Bounty Board — Most Wanted",
-      description: `*The Marines have updated their records. These pirates put up the biggest numbers ever recorded.*\n\n${lines}${warLabel ? `\n\n🏆 Top performance from **${warLabel}**` : ""}`,
+      description: `*The Marines have updated their records. These pirates put up the biggest numbers ever recorded.*\n\n${lines}`,
       color: 0xF8D978,
       footer: { text: "Straw Hats Clash Royale · All-time best single-war fame" },
       timestamp: new Date().toISOString(),
