@@ -92,12 +92,16 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
         const avgDecksMissed = countedWars.length
           ? Math.round((countedWars.reduce((s, w) => s + w.decksMissed, 0) / countedWars.length) * 10) / 10
           : 0;
+        const avgDecksUsed = countedWars.length
+          ? Math.round((countedWars.reduce((s, w) => s + w.decksUsed, 0) / countedWars.length) * 10) / 10
+          : 0;
         return {
           tag: member.tag,
           name: member.name,
           wars,
           avgFame,
           avgDecksMissed,
+          avgDecksUsed,
           warsCount: countedWars.length,
           clanRank: currentMemberRanks.get(member.tag) ?? null,
         };
@@ -113,7 +117,7 @@ async function getAnalysisData(): Promise<{ members: MemberAnalysis[]; snapshotC
 export default async function WarAnalysisPage() {
   const { members, snapshotCount } = await getAnalysisData();
 
-  const flaggedCount = members.filter((m) => m.avgFame < 1700).length;
+  const flaggedCount = members.filter((m) => m.avgFame < 2000).length;
   const topAvgFame = members.length > 0 ? members[0].avgFame : 0;
   const overallAvg =
     members.length > 0
@@ -163,7 +167,7 @@ export default async function WarAnalysisPage() {
               label: "Clan Avg Fame",
               value: overallAvg.toLocaleString(),
               icon: Trophy,
-              color: overallAvg >= 1700 ? "text-green-clash" : "text-red-clash",
+              color: overallAvg >= 2000 ? "text-green-clash" : "text-red-clash",
             },
             {
               label: "Top Avg Fame",

@@ -20,11 +20,12 @@ export interface MemberAnalysis {
   wars: WarEntry[];
   avgFame: number;
   avgDecksMissed: number;
+  avgDecksUsed: number;
   warsCount: number;
   clanRank: number | null;
 }
 
-const FAME_WEEKLY_THRESHOLD = 1700;
+const FAME_WEEKLY_THRESHOLD = 2000;
 const FAME_WAR_THRESHOLD = 850;
 
 const AVG_FAME_RANKS = [
@@ -179,9 +180,10 @@ export default function WarAnalysisClient({
       </div>
 
       {/* Column headers */}
-      <div className="grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
+      <div className="grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_7rem_6rem_6rem_5rem_1.5rem] items-center gap-2 px-4 py-1.5 text-[0.58rem] font-heading tracking-[0.14em] text-text-muted uppercase">
         <span>Member</span>
         <span className="text-right">Avg Fame</span>
+        <span className="text-right hidden sm:block">Avg Decks/War</span>
         <span className="text-right hidden sm:block">Decks Used</span>
         <span className="text-right hidden sm:block">Wars</span>
         <span />
@@ -194,7 +196,6 @@ export default function WarAnalysisClient({
         const isFlaggedRecent = mostRecentFame !== null && mostRecentFame < FAME_WEEKLY_THRESHOLD;
         const totalDecksUsed = member.wars.reduce((s, w) => s + w.decksUsed, 0);
         const maxDecks = member.warsCount * 16;
-        const avgDecksUsed = Math.round((totalDecksUsed / member.warsCount) * 10) / 10;
 
         return (
           <div
@@ -209,7 +210,7 @@ export default function WarAnalysisClient({
           >
             <button
               onClick={() => setExpanded(isOpen ? null : member.tag)}
-              className={`w-full grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_8rem_7rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
+              className={`w-full grid grid-cols-[1fr_5rem_1.5rem] sm:grid-cols-[1fr_7rem_6rem_6rem_5rem_1.5rem] items-center gap-2 px-4 py-3.5 hover:bg-white/[0.025] transition-colors text-left ${
                 isFlaggedRecent ? "animate-flash-red-bg" : isFlagged ? "bg-red-clash/[0.04]" : ""
               }`}
             >
@@ -243,6 +244,21 @@ export default function WarAnalysisClient({
                   }`}
                 >
                   {member.avgFame.toLocaleString()}
+                </span>
+              </div>
+
+              {/* Avg Decks Used per war — desktop only */}
+              <div className="text-right hidden sm:block">
+                <span
+                  className={`font-heading text-xs ${
+                    member.avgDecksUsed < 16
+                      ? member.avgDecksUsed < 12
+                        ? "text-red-clash"
+                        : "text-gold-400"
+                      : "text-green-clash"
+                  }`}
+                >
+                  {member.avgDecksUsed} / 16
                 </span>
               </div>
 
@@ -292,8 +308,22 @@ export default function WarAnalysisClient({
                     <WarRow key={war.snapshotId} war={war} />
                   ))}
                 </div>
-                {/* Mobile: show decks used total */}
+                {/* Mobile: show decks used total + avg */}
                 <div className="sm:hidden mt-3 flex items-center justify-between px-3 text-[0.65rem] font-heading tracking-wide text-text-muted">
+                  <span>Avg Decks/War</span>
+                  <span
+                    className={
+                      member.avgDecksUsed < 16
+                        ? member.avgDecksUsed < 12
+                          ? "text-red-clash"
+                          : "text-gold-400"
+                        : "text-green-clash"
+                    }
+                  >
+                    {member.avgDecksUsed} / 16
+                  </span>
+                </div>
+                <div className="sm:hidden mt-1.5 flex items-center justify-between px-3 text-[0.65rem] font-heading tracking-wide text-text-muted">
                   <span>Total Decks Used</span>
                   <span
                     className={

@@ -17,6 +17,7 @@ export interface MemberAnalysis {
   wars: WarEntry[]
   avgFame: number
   avgDecksMissed: number
+  avgDecksUsed: number
   warsCount: number
 }
 
@@ -92,7 +93,10 @@ export async function GET() {
         const avgDecksMissed = countedWars.length
           ? Math.round((countedWars.reduce((s, w) => s + w.decksMissed, 0) / countedWars.length) * 10) / 10
           : 0
-        return { tag: member.tag, name: member.name, wars, avgFame, avgDecksMissed, warsCount: countedWars.length }
+        const avgDecksUsed = countedWars.length
+          ? Math.round((countedWars.reduce((s, w) => s + w.decksUsed, 0) / countedWars.length) * 10) / 10
+          : 0
+        return { tag: member.tag, name: member.name, wars, avgFame, avgDecksMissed, avgDecksUsed, warsCount: countedWars.length }
       })
       .sort((a, b) => b.avgFame - a.avgFame)
 
